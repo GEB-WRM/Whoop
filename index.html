@@ -358,9 +358,9 @@
         }
         
         .journal-card h4 {
-            font-size: 0.9rem;
+            font-size: 1.1rem;
             margin-bottom: 0.8rem;
-            color: var(--accent-primary);
+            color: var(--text-primary);
             font-weight: 600;
         }
         
@@ -506,7 +506,7 @@
     
     <div class="tabs">
         <button class="tab active" onclick="switchTab('journal')">Journal</button>
-        <button class="tab" onclick="switchTab('physio')">Physiological</button>
+        <button class="tab" onclick="switchTab('physio')">Health Trends</button>
         <button class="tab" onclick="switchTab('workouts')">Workouts</button>
         <button class="tab" onclick="switchTab('sleep')">Sleep</button>
     </div>
@@ -721,9 +721,15 @@
         function renderJournalDashboard() {
             if (journalData.length === 0) return;
             
+            // Filter out masturbate entries
+            const filteredData = journalData.filter(entry => {
+                const question = (entry['Question text'] || '').toLowerCase();
+                return !question.includes('masturbat');
+            });
+            
             const questionStats = {};
             
-            journalData.forEach(entry => {
+            filteredData.forEach(entry => {
                 const question = entry['Question text'];
                 const answered = entry['Answered yes'];
                 
@@ -738,12 +744,23 @@
                 }
             });
             
-            let html = '<div class="journal-grid">';
+            // Calculate health score
+            const healthScore = calculateHealthScore(questionStats);
+            
+            let html = `
+                <div class="metric-card" style="margin-bottom: 2rem; grid-column: 1 / -1; max-width: 400px;">
+                    <h3>Overall Health Score</h3>
+                    <div class="metric-value">${healthScore}/10</div>
+                    <div class="metric-label">Based on habit consistency</div>
+                </div>
+                <div class="journal-grid">
+            `;
             
             Object.keys(questionStats).sort().forEach(question => {
                 const stats = questionStats[question];
                 const total = stats.yes + stats.no;
                 const yesPercent = total > 0 ? ((stats.yes / total) * 100).toFixed(0) : 0;
+                const noPercent = total > 0 ? ((stats.no / total) * 100).toFixed(0) : 0;
                 const yesHighlighted = stats.yes >= stats.no ? 'highlighted' : '';
                 const noHighlighted = stats.no > stats.yes ? 'highlighted' : '';
                 
@@ -757,7 +774,7 @@
                             </div>
                             <div class="journal-stat">
                                 <div class="journal-stat-value ${noHighlighted}">${stats.no}</div>
-                                <div class="journal-stat-label">No</div>
+                                <div class="journal-stat-label">No (${noPercent}%)</div>
                             </div>
                         </div>
                     </div>
@@ -865,6 +882,57 @@
             document.getElementById('journal-content').innerHTML = html;
         }
         
+        function calculateHealthScore(questionStats) {
+            let score = 5; // Start at baseline
+            
+            // Positive habits (add points)
+            const positiveHabits = [
+                'Expressed gratitude',
+                'Practiced breathwork',
+                'Consumed protein',
+                'Felt energized',
+                'vitamin D',
+                'magnesium',
+                'creatine',
+                'intermittent fasting'
+            ];
+            
+            // Negative habits (subtract points)
+            const negativeHabits = [
+                'alcoholic drinks',
+                'sick or ill',
+                'Irritable',
+                'headache',
+                'fever'
+            ];
+            
+            Object.entries(questionStats).forEach(([question, stats]) => {
+                const total = stats.yes + stats.no;
+                const yesPercent = (stats.yes / total) * 100;
+                
+                // Check positive habits
+                positiveHabits.forEach(habit => {
+                    if (question.toLowerCase().includes(habit.toLowerCase())) {
+                        if (yesPercent > 80) score += 0.5;
+                        else if (yesPercent > 60) score += 0.3;
+                        else if (yesPercent < 20) score -= 0.2;
+                    }
+                });
+                
+                // Check negative habits
+                negativeHabits.forEach(habit => {
+                    if (question.toLowerCase().includes(habit.toLowerCase())) {
+                        if (yesPercent > 50) score -= 0.5;
+                        else if (yesPercent > 30) score -= 0.3;
+                        else if (yesPercent < 10) score += 0.2;
+                    }
+                });
+            });
+            
+            // Cap at 1-10
+            return Math.max(1, Math.min(10, Math.round(score * 10) / 10));
+        }
+        
         // Physiological Dashboard
         function renderPhysioDashboard() {
             if (physioData.length === 0) return;
@@ -877,8 +945,16 @@
             const avgRHR = calculateAverage(validData, 'Resting heart rate (bpm)');
             const avgStrain = calculateAverage(validData, 'Day Strain');
             
+            // Calculate health score
+            const healthScore = calculatePhysioHealthScore(validData, avgRecovery, avgHRV, avgRHR, avgStrain);
+            
             let html = `
                 <div class="dashboard-grid">
+                    <div class="metric-card">
+                        <h3>Health Score</h3>
+                        <div class="metric-value">${healthScore}/10</div>
+                        <div class="metric-label">Overall Health Rating</div>
+                    </div>
                     <div class="metric-card">
                         <h3>Avg Recovery</h3>
                         <div class="metric-value">${avgRecovery.toFixed(0)}%</div>
@@ -902,7 +978,23 @@
                 </div>
             `;
             
-            // Charts
+            // Sleep and wake time bell curves
+            html += `
+                <div class="chart-container">
+                    <h3>Bedtime Distribution</h3>
+                    <div class="chart-wrapper">
+                        <canvas id="physio-bedtime-chart"></canvas>
+                    </div>
+                </div>
+                <div class="chart-container">
+                    <h3>Wake Time Distribution</h3>
+                    <div class="chart-wrapper">
+                        <canvas id="physio-waketime-chart"></canvas>
+                    </div>
+                </div>
+            `;
+            
+            // Charts with trend annotations
             const chartConfigs = [
                 { title: 'Recovery Score', field: 'Recovery score %', color: '#00ff88' },
                 { title: 'Resting Heart Rate', field: 'Resting heart rate (bpm)', color: '#ff3366' },
@@ -916,9 +1008,17 @@
             ];
             
             chartConfigs.forEach((config, index) => {
+                const trendPerDay = calculateDailyTrend(validData, config.field, config.convert);
+                const trendDirection = trendPerDay > 0 ? '↑' : trendPerDay < 0 ? '↓' : '→';
+                const trendColor = trendPerDay > 0 ? '#00ff88' : trendPerDay < 0 ? '#ff3366' : '#a0a0a0';
+                
                 html += `
                     <div class="chart-container">
-                        <h3>${config.title}</h3>
+                        <h3>${config.title} 
+                            <span style="color: ${trendColor}; font-size: 0.9rem; margin-left: 1rem;">
+                                ${trendDirection} ${Math.abs(trendPerDay).toFixed(2)}/day
+                            </span>
+                        </h3>
                         <div class="chart-wrapper">
                             <canvas id="physio-chart-${index}"></canvas>
                         </div>
@@ -983,10 +1083,77 @@
             
             // Render charts
             setTimeout(() => {
+                // Render bedtime and wake time bell curves
+                createTimeDistributionChart('physio-bedtime-chart', validData, 'Sleep onset', '#00ff88');
+                createTimeDistributionChart('physio-waketime-chart', validData, 'Wake onset', '#00ddff');
+                
                 chartConfigs.forEach((config, index) => {
                     createLineChart(`physio-chart-${index}`, validData, config);
                 });
             }, 100);
+        }
+        
+        function calculatePhysioHealthScore(data, avgRecovery, avgHRV, avgRHR, avgStrain) {
+            let score = 5; // Start at baseline
+            
+            // Recovery score impact
+            if (avgRecovery >= 75) score += 2;
+            else if (avgRecovery >= 67) score += 1.5;
+            else if (avgRecovery >= 50) score += 0.5;
+            else if (avgRecovery < 40) score -= 1.5;
+            else if (avgRecovery < 50) score -= 0.5;
+            
+            // HRV impact (higher is better, but varies by individual)
+            if (avgHRV >= 100) score += 1;
+            else if (avgHRV >= 75) score += 0.5;
+            else if (avgHRV < 40) score -= 1;
+            else if (avgHRV < 60) score -= 0.5;
+            
+            // RHR impact (lower is generally better)
+            if (avgRHR <= 50) score += 1;
+            else if (avgRHR <= 60) score += 0.5;
+            else if (avgRHR >= 75) score -= 1;
+            else if (avgRHR >= 65) score -= 0.5;
+            
+            // Strain balance
+            if (avgStrain >= 12 && avgStrain <= 18) score += 0.5; // Sweet spot
+            else if (avgStrain > 20) score -= 0.5; // Too much
+            else if (avgStrain < 8) score -= 0.3; // Too little
+            
+            // Trend impacts
+            const recoveryTrend = calculateTrend(data, 'Recovery score %');
+            if (recoveryTrend > 5) score += 0.5;
+            else if (recoveryTrend < -5) score -= 0.5;
+            
+            const hrvTrend = calculateTrend(data, 'Heart rate variability (ms)');
+            if (hrvTrend > 10) score += 0.5;
+            else if (hrvTrend < -10) score -= 0.5;
+            
+            // Cap at 1-10
+            return Math.max(1, Math.min(10, Math.round(score * 10) / 10));
+        }
+        
+        function calculateDailyTrend(data, field, convertFn) {
+            if (data.length < 2) return 0;
+            
+            const values = data.map(d => {
+                let val = parseFloat(d[field]);
+                if (convertFn) val = convertFn(val);
+                return val;
+            }).filter(v => !isNaN(v));
+            
+            if (values.length < 2) return 0;
+            
+            // Simple linear regression to get daily change
+            const n = values.length;
+            const xSum = (n * (n - 1)) / 2; // Sum of 0,1,2,...,n-1
+            const ySum = values.reduce((a, b) => a + b, 0);
+            const xySum = values.reduce((sum, y, i) => sum + (i * y), 0);
+            const xSquareSum = (n * (n - 1) * (2 * n - 1)) / 6;
+            
+            const slope = (n * xySum - xSum * ySum) / (n * xSquareSum - xSum * xSum);
+            
+            return slope;
         }
         
         // Workout Dashboard
