@@ -1,0 +1,1210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Whoop Analytics Dashboard</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Archivo:wght@300;400;600;700;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-primary: #0a0e14;
+            --bg-secondary: #0f1419;
+            --bg-tertiary: #151a21;
+            --accent-primary: #00ff88;
+            --accent-secondary: #00ddff;
+            --accent-warning: #ffaa00;
+            --accent-danger: #ff3366;
+            --text-primary: #e6e6e6;
+            --text-secondary: #a0a0a0;
+            --text-dim: #606060;
+            --border-color: #1a2028;
+            --shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Archivo', sans-serif;
+            background: linear-gradient(135deg, var(--bg-primary) 0%, var(--bg-secondary) 100%);
+            color: var(--text-primary);
+            min-height: 100vh;
+            padding: 0;
+            overflow-x: hidden;
+        }
+        
+        /* Header */
+        .header {
+            background: rgba(15, 20, 25, 0.95);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid var(--border-color);
+            padding: 1.5rem 2rem;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: var(--shadow);
+        }
+        
+        .header h1 {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 1.8rem;
+            font-weight: 900;
+            letter-spacing: -0.02em;
+            background: linear-gradient(135deg, var(--accent-primary) 0%, var(--accent-secondary) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .header p {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            margin-top: 0.3rem;
+            font-weight: 300;
+        }
+        
+        /* Tabs */
+        .tabs {
+            display: flex;
+            gap: 0;
+            background: var(--bg-tertiary);
+            border-bottom: 2px solid var(--border-color);
+            padding: 0 2rem;
+            overflow-x: auto;
+        }
+        
+        .tab {
+            font-family: 'JetBrains Mono', monospace;
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            padding: 1.2rem 2rem;
+            cursor: pointer;
+            font-size: 0.85rem;
+            font-weight: 600;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+            transition: all 0.3s ease;
+            border-bottom: 3px solid transparent;
+            position: relative;
+        }
+        
+        .tab:hover {
+            color: var(--text-primary);
+            background: rgba(0, 255, 136, 0.05);
+        }
+        
+        .tab.active {
+            color: var(--accent-primary);
+            border-bottom-color: var(--accent-primary);
+        }
+        
+        /* Content */
+        .content {
+            padding: 2rem;
+            max-width: 1800px;
+            margin: 0 auto;
+        }
+        
+        .tab-content {
+            display: none;
+            animation: fadeIn 0.5s ease;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        /* Import Section */
+        .import-section {
+            background: var(--bg-tertiary);
+            border: 2px dashed var(--border-color);
+            border-radius: 12px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            transition: all 0.3s ease;
+        }
+        
+        .import-section:hover {
+            border-color: var(--accent-primary);
+            background: rgba(0, 255, 136, 0.02);
+        }
+        
+        .import-section h3 {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 1rem;
+            margin-bottom: 1rem;
+            color: var(--accent-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+        }
+        
+        .file-input-wrapper {
+            position: relative;
+            display: inline-block;
+        }
+        
+        .file-input {
+            display: none;
+        }
+        
+        .file-label {
+            display: inline-block;
+            padding: 0.8rem 1.5rem;
+            background: linear-gradient(135deg, var(--accent-primary) 0%, var(--accent-secondary) 100%);
+            color: var(--bg-primary);
+            font-family: 'JetBrains Mono', monospace;
+            font-weight: 700;
+            font-size: 0.85rem;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        
+        .file-label:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(0, 255, 136, 0.3);
+        }
+        
+        .import-status {
+            margin-top: 1rem;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+        
+        .import-status.success {
+            color: var(--accent-primary);
+        }
+        
+        .import-status.error {
+            color: var(--accent-danger);
+        }
+        
+        /* Dashboard Grid */
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        
+        .metric-card {
+            background: linear-gradient(135deg, var(--bg-tertiary) 0%, rgba(21, 26, 33, 0.8) 100%);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: var(--shadow);
+            transition: all 0.3s ease;
+        }
+        
+        .metric-card:hover {
+            border-color: var(--accent-primary);
+            transform: translateY(-4px);
+            box-shadow: 0 8px 30px rgba(0, 255, 136, 0.15);
+        }
+        
+        .metric-card h3 {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--text-secondary);
+            margin-bottom: 0.8rem;
+        }
+        
+        .metric-value {
+            font-size: 2.5rem;
+            font-weight: 900;
+            background: linear-gradient(135deg, var(--accent-primary) 0%, var(--accent-secondary) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 0.5rem;
+        }
+        
+        .metric-label {
+            color: var(--text-dim);
+            font-size: 0.85rem;
+            font-weight: 300;
+        }
+        
+        /* Charts */
+        .chart-container {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: var(--shadow);
+        }
+        
+        .chart-container h3 {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 1rem;
+            margin-bottom: 1.5rem;
+            color: var(--accent-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+        }
+        
+        .chart-wrapper {
+            position: relative;
+            height: 400px;
+        }
+        
+        /* Insights Section */
+        .insights-section {
+            background: linear-gradient(135deg, rgba(0, 255, 136, 0.1) 0%, rgba(0, 221, 255, 0.05) 100%);
+            border: 1px solid var(--accent-primary);
+            border-radius: 12px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+        }
+        
+        .insights-section h3 {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 1rem;
+            margin-bottom: 1.5rem;
+            color: var(--accent-primary);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+        }
+        
+        .insight-item {
+            padding: 1rem;
+            background: rgba(0, 0, 0, 0.3);
+            border-left: 3px solid var(--accent-secondary);
+            margin-bottom: 1rem;
+            border-radius: 6px;
+        }
+        
+        .insight-item:last-child {
+            margin-bottom: 0;
+        }
+        
+        .insight-item strong {
+            color: var(--accent-secondary);
+            font-family: 'JetBrains Mono', monospace;
+        }
+        
+        /* Journal Grid */
+        .journal-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+        
+        .journal-card {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 1.2rem;
+            transition: all 0.3s ease;
+        }
+        
+        .journal-card:hover {
+            border-color: var(--accent-primary);
+            transform: translateY(-2px);
+        }
+        
+        .journal-card h4 {
+            font-size: 0.9rem;
+            margin-bottom: 0.8rem;
+            color: var(--text-primary);
+            font-weight: 600;
+        }
+        
+        .journal-stats {
+            display: flex;
+            justify-content: space-between;
+            gap: 1rem;
+        }
+        
+        .journal-stat {
+            flex: 1;
+            text-align: center;
+        }
+        
+        .journal-stat-value {
+            font-size: 1.8rem;
+            font-weight: 700;
+            font-family: 'JetBrains Mono', monospace;
+        }
+        
+        .journal-stat-value.yes {
+            color: var(--accent-primary);
+        }
+        
+        .journal-stat-value.no {
+            color: var(--text-dim);
+        }
+        
+        .journal-stat-label {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-top: 0.3rem;
+        }
+        
+        /* Activity Cards */
+        .activity-section {
+            margin-bottom: 2rem;
+        }
+        
+        .activity-card {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+        
+        .activity-card h4 {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 1.1rem;
+            margin-bottom: 1rem;
+            color: var(--accent-primary);
+            text-transform: uppercase;
+        }
+        
+        .activity-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 1rem;
+        }
+        
+        .activity-stat {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 1rem;
+            border-radius: 6px;
+            border-left: 3px solid var(--accent-secondary);
+        }
+        
+        .activity-stat-label {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 0.5rem;
+        }
+        
+        .activity-stat-values {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.85rem;
+            color: var(--text-primary);
+        }
+        
+        .activity-stat-values span {
+            display: block;
+            margin: 0.2rem 0;
+        }
+        
+        /* Loading State */
+        .loading {
+            text-align: center;
+            padding: 4rem;
+            color: var(--text-secondary);
+        }
+        
+        .loading::after {
+            content: '...';
+            animation: dots 1.5s steps(4, end) infinite;
+        }
+        
+        @keyframes dots {
+            0%, 20% { content: '.'; }
+            40% { content: '..'; }
+            60%, 100% { content: '...'; }
+        }
+        
+        /* Responsive */
+        @media (max-width: 768px) {
+            .header {
+                padding: 1rem;
+            }
+            
+            .content {
+                padding: 1rem;
+            }
+            
+            .tabs {
+                padding: 0 1rem;
+            }
+            
+            .tab {
+                padding: 1rem 1.5rem;
+                font-size: 0.75rem;
+            }
+            
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>WHOOP ANALYTICS</h1>
+        <p>Advanced Performance Tracking & Insights</p>
+    </div>
+    
+    <div class="tabs">
+        <button class="tab active" onclick="switchTab('journal')">Journal</button>
+        <button class="tab" onclick="switchTab('physio')">Physiological</button>
+        <button class="tab" onclick="switchTab('workouts')">Workouts</button>
+        <button class="tab" onclick="switchTab('sleep')">Sleep</button>
+    </div>
+    
+    <div class="content">
+        <!-- Journal Tab -->
+        <div id="journal" class="tab-content active">
+            <div class="import-section">
+                <h3>Import Journal Data</h3>
+                <div class="file-input-wrapper">
+                    <input type="file" id="journal-file" class="file-input" accept=".xlsx,.csv">
+                    <label for="journal-file" class="file-label">Select File</label>
+                </div>
+                <div id="journal-status" class="import-status"></div>
+            </div>
+            
+            <div id="journal-content" class="loading">Loading journal data</div>
+        </div>
+        
+        <!-- Physiological Tab -->
+        <div id="physio" class="tab-content">
+            <div class="import-section">
+                <h3>Import Physiological Cycles</h3>
+                <div class="file-input-wrapper">
+                    <input type="file" id="physio-file" class="file-input" accept=".csv">
+                    <label for="physio-file" class="file-label">Select File</label>
+                </div>
+                <div id="physio-status" class="import-status"></div>
+            </div>
+            
+            <div id="physio-content" class="loading">Loading physiological data</div>
+        </div>
+        
+        <!-- Workouts Tab -->
+        <div id="workouts" class="tab-content">
+            <div class="import-section">
+                <h3>Import Workout Data</h3>
+                <div class="file-input-wrapper">
+                    <input type="file" id="workout-file" class="file-input" accept=".csv">
+                    <label for="workout-file" class="file-label">Select File</label>
+                </div>
+                <div id="workout-status" class="import-status"></div>
+            </div>
+            
+            <div id="workout-content" class="loading">Loading workout data</div>
+        </div>
+        
+        <!-- Sleep Tab -->
+        <div id="sleep" class="tab-content">
+            <div class="import-section">
+                <h3>Import Sleep Data</h3>
+                <div class="file-input-wrapper">
+                    <input type="file" id="sleep-file" class="file-input" accept=".csv">
+                    <label for="sleep-file" class="file-label">Select File</label>
+                </div>
+                <div id="sleep-status" class="import-status"></div>
+            </div>
+            
+            <div id="sleep-content" class="loading">Loading sleep data</div>
+        </div>
+    </div>
+
+    <script>
+        // Data storage
+        let journalData = [];
+        let physioData = [];
+        let workoutData = [];
+        let sleepData = [];
+        let charts = {};
+        
+        // Tab switching
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            
+            event.target.classList.add('active');
+            document.getElementById(tabName).classList.add('active');
+        }
+        
+        // Local storage functions
+        function saveToLocalStorage(key, data) {
+            localStorage.setItem(key, JSON.stringify(data));
+        }
+        
+        function loadFromLocalStorage(key) {
+            const data = localStorage.getItem(key);
+            return data ? JSON.parse(data) : [];
+        }
+        
+        // Merge new data with existing data, avoiding duplicates by date
+        function mergeData(existingData, newData, dateField) {
+            const existingDates = new Set(existingData.map(item => item[dateField]));
+            const uniqueNewData = newData.filter(item => !existingDates.has(item[dateField]));
+            return [...existingData, ...uniqueNewData].sort((a, b) => 
+                new Date(a[dateField]) - new Date(b[dateField])
+            );
+        }
+        
+        // File upload handlers
+        document.getElementById('journal-file').addEventListener('change', handleJournalUpload);
+        document.getElementById('physio-file').addEventListener('change', handlePhysioUpload);
+        document.getElementById('workout-file').addEventListener('change', handleWorkoutUpload);
+        document.getElementById('sleep-file').addEventListener('change', handleSleepUpload);
+        
+        function handleJournalUpload(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                try {
+                    const workbook = XLSX.read(event.target.result, { type: 'binary' });
+                    const sheetName = workbook.SheetNames[0];
+                    const data = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName]);
+                    
+                    const existing = loadFromLocalStorage('journalData');
+                    journalData = mergeData(existing, data, 'Cycle start time');
+                    saveToLocalStorage('journalData', journalData);
+                    
+                    renderJournalDashboard();
+                    document.getElementById('journal-status').textContent = `✓ Imported ${data.length} entries (${journalData.length} total)`;
+                    document.getElementById('journal-status').className = 'import-status success';
+                } catch (error) {
+                    document.getElementById('journal-status').textContent = `✗ Error: ${error.message}`;
+                    document.getElementById('journal-status').className = 'import-status error';
+                }
+            };
+            reader.readAsBinaryString(file);
+        }
+        
+        function handlePhysioUpload(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            
+            Papa.parse(file, {
+                header: true,
+                complete: function(results) {
+                    try {
+                        const existing = loadFromLocalStorage('physioData');
+                        physioData = mergeData(existing, results.data, 'Cycle start time');
+                        saveToLocalStorage('physioData', physioData);
+                        
+                        renderPhysioDashboard();
+                        document.getElementById('physio-status').textContent = `✓ Imported ${results.data.length} cycles (${physioData.length} total)`;
+                        document.getElementById('physio-status').className = 'import-status success';
+                    } catch (error) {
+                        document.getElementById('physio-status').textContent = `✗ Error: ${error.message}`;
+                        document.getElementById('physio-status').className = 'import-status error';
+                    }
+                }
+            });
+        }
+        
+        function handleWorkoutUpload(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            
+            Papa.parse(file, {
+                header: true,
+                complete: function(results) {
+                    try {
+                        const existing = loadFromLocalStorage('workoutData');
+                        workoutData = mergeData(existing, results.data, 'Workout start time');
+                        saveToLocalStorage('workoutData', workoutData);
+                        
+                        renderWorkoutDashboard();
+                        document.getElementById('workout-status').textContent = `✓ Imported ${results.data.length} workouts (${workoutData.length} total)`;
+                        document.getElementById('workout-status').className = 'import-status success';
+                    } catch (error) {
+                        document.getElementById('workout-status').textContent = `✗ Error: ${error.message}`;
+                        document.getElementById('workout-status').className = 'import-status error';
+                    }
+                }
+            });
+        }
+        
+        function handleSleepUpload(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            
+            Papa.parse(file, {
+                header: true,
+                complete: function(results) {
+                    try {
+                        const existing = loadFromLocalStorage('sleepData');
+                        sleepData = mergeData(existing, results.data, 'Sleep onset');
+                        saveToLocalStorage('sleepData', sleepData);
+                        
+                        renderSleepDashboard();
+                        document.getElementById('sleep-status').textContent = `✓ Imported ${results.data.length} sleep sessions (${sleepData.length} total)`;
+                        document.getElementById('sleep-status').className = 'import-status success';
+                    } catch (error) {
+                        document.getElementById('sleep-status').textContent = `✗ Error: ${error.message}`;
+                        document.getElementById('sleep-status').className = 'import-status error';
+                    }
+                }
+            });
+        }
+        
+        // Journal Dashboard
+        function renderJournalDashboard() {
+            if (journalData.length === 0) return;
+            
+            const questionStats = {};
+            
+            journalData.forEach(entry => {
+                const question = entry['Question text'];
+                const answered = entry['Answered yes'];
+                
+                if (!questionStats[question]) {
+                    questionStats[question] = { yes: 0, no: 0 };
+                }
+                
+                if (answered === true || answered === 'TRUE' || answered === 'true') {
+                    questionStats[question].yes++;
+                } else {
+                    questionStats[question].no++;
+                }
+            });
+            
+            let html = '<div class="journal-grid">';
+            
+            Object.keys(questionStats).sort().forEach(question => {
+                const stats = questionStats[question];
+                const total = stats.yes + stats.no;
+                const yesPercent = total > 0 ? ((stats.yes / total) * 100).toFixed(0) : 0;
+                
+                html += `
+                    <div class="journal-card">
+                        <h4>${question}</h4>
+                        <div class="journal-stats">
+                            <div class="journal-stat">
+                                <div class="journal-stat-value yes">${stats.yes}</div>
+                                <div class="journal-stat-label">Yes (${yesPercent}%)</div>
+                            </div>
+                            <div class="journal-stat">
+                                <div class="journal-stat-value no">${stats.no}</div>
+                                <div class="journal-stat-label">No</div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            html += '</div>';
+            
+            // Add insights
+            html += '<div class="insights-section"><h3>Journal Insights</h3>';
+            
+            // Find most common yes answers
+            const sortedByYes = Object.entries(questionStats)
+                .sort((a, b) => b[1].yes - a[1].yes)
+                .slice(0, 3);
+            
+            html += '<div class="insight-item"><strong>Top Habits:</strong> ';
+            html += sortedByYes.map(([q, s]) => `${q} (${s.yes} times)`).join(', ');
+            html += '</div>';
+            
+            // Find least common activities
+            const sortedByNo = Object.entries(questionStats)
+                .sort((a, b) => b[1].no - a[1].no)
+                .slice(0, 3);
+            
+            html += '<div class="insight-item"><strong>Rare Activities:</strong> ';
+            html += sortedByNo.map(([q, s]) => `${q} (only ${s.yes} times)`).join(', ');
+            html += '</div>';
+            
+            html += '</div>';
+            
+            document.getElementById('journal-content').innerHTML = html;
+        }
+        
+        // Physiological Dashboard
+        function renderPhysioDashboard() {
+            if (physioData.length === 0) return;
+            
+            const validData = physioData.filter(d => d['Cycle start time'] && d['Cycle start time'].trim());
+            
+            // Calculate averages
+            const avgRecovery = calculateAverage(validData, 'Recovery score %');
+            const avgHRV = calculateAverage(validData, 'Heart rate variability (ms)');
+            const avgRHR = calculateAverage(validData, 'Resting heart rate (bpm)');
+            const avgStrain = calculateAverage(validData, 'Day Strain');
+            
+            let html = `
+                <div class="dashboard-grid">
+                    <div class="metric-card">
+                        <h3>Avg Recovery</h3>
+                        <div class="metric-value">${avgRecovery.toFixed(0)}%</div>
+                        <div class="metric-label">Recovery Score</div>
+                    </div>
+                    <div class="metric-card">
+                        <h3>Avg HRV</h3>
+                        <div class="metric-value">${avgHRV.toFixed(0)}</div>
+                        <div class="metric-label">Milliseconds</div>
+                    </div>
+                    <div class="metric-card">
+                        <h3>Avg RHR</h3>
+                        <div class="metric-value">${avgRHR.toFixed(0)}</div>
+                        <div class="metric-label">Beats per Minute</div>
+                    </div>
+                    <div class="metric-card">
+                        <h3>Avg Strain</h3>
+                        <div class="metric-value">${avgStrain.toFixed(1)}</div>
+                        <div class="metric-label">Day Strain</div>
+                    </div>
+                </div>
+            `;
+            
+            // Charts
+            const chartConfigs = [
+                { title: 'Recovery Score', field: 'Recovery score %', color: '#00ff88' },
+                { title: 'Resting Heart Rate', field: 'Resting heart rate (bpm)', color: '#ff3366' },
+                { title: 'HRV (Heart Rate Variability)', field: 'Heart rate variability (ms)', color: '#00ddff' },
+                { title: 'Skin Temperature (°F)', field: 'Skin temp (celsius)', color: '#ffaa00', convert: celsiusToFahrenheit },
+                { title: 'Blood Oxygen', field: 'Blood oxygen %', color: '#00ff88' },
+                { title: 'Day Strain', field: 'Day Strain', color: '#ff3366' },
+                { title: 'Energy Burned', field: 'Energy burned (cal)', color: '#ffaa00' },
+                { title: 'Max Heart Rate', field: 'Max HR (bpm)', color: '#ff3366' },
+                { title: 'Average Heart Rate', field: 'Average HR (bpm)', color: '#00ddff' }
+            ];
+            
+            chartConfigs.forEach((config, index) => {
+                html += `
+                    <div class="chart-container">
+                        <h3>${config.title}</h3>
+                        <div class="chart-wrapper">
+                            <canvas id="physio-chart-${index}"></canvas>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            // Insights
+            html += '<div class="insights-section"><h3>Physiological Insights</h3>';
+            
+            const recoveryTrend = calculateTrend(validData, 'Recovery score %');
+            html += `<div class="insight-item"><strong>Recovery Trend:</strong> ${recoveryTrend > 0 ? 'Improving' : 'Declining'} (${Math.abs(recoveryTrend).toFixed(1)}% change)</div>`;
+            
+            const hrvTrend = calculateTrend(validData, 'Heart rate variability (ms)');
+            html += `<div class="insight-item"><strong>HRV Trend:</strong> ${hrvTrend > 0 ? 'Increasing' : 'Decreasing'} (${Math.abs(hrvTrend).toFixed(1)}ms change)</div>`;
+            
+            const highStrainDays = validData.filter(d => parseFloat(d['Day Strain']) > 15).length;
+            html += `<div class="insight-item"><strong>High Strain Days:</strong> ${highStrainDays} days with strain > 15</div>`;
+            
+            html += '</div>';
+            
+            document.getElementById('physio-content').innerHTML = html;
+            
+            // Render charts
+            setTimeout(() => {
+                chartConfigs.forEach((config, index) => {
+                    createLineChart(`physio-chart-${index}`, validData, config);
+                });
+            }, 100);
+        }
+        
+        // Workout Dashboard
+        function renderWorkoutDashboard() {
+            if (workoutData.length === 0) return;
+            
+            const validData = workoutData.filter(d => d['Activity name'] && d['Activity name'].trim());
+            
+            // Group by activity
+            const activities = {};
+            validData.forEach(workout => {
+                const activity = workout['Activity name'];
+                if (!activities[activity]) {
+                    activities[activity] = [];
+                }
+                activities[activity].push(workout);
+            });
+            
+            let html = '<div class="activity-section">';
+            
+            Object.keys(activities).sort().forEach(activity => {
+                const workouts = activities[activity];
+                
+                html += `
+                    <div class="activity-card">
+                        <h4>${activity}</h4>
+                        <div style="margin-bottom: 1rem; color: var(--text-secondary);">
+                            Total workouts: ${workouts.length}
+                        </div>
+                        <div class="activity-stats">
+                `;
+                
+                const stats = [
+                    { label: 'Duration (min)', field: 'Duration (min)' },
+                    { label: 'Strain', field: 'Activity Strain' },
+                    { label: 'Calories', field: 'Energy burned (cal)' },
+                    { label: 'Max HR', field: 'Max HR (bpm)' },
+                    { label: 'Avg HR', field: 'Average HR (bpm)' }
+                ];
+                
+                stats.forEach(stat => {
+                    const values = workouts.map(w => parseFloat(w[stat.field])).filter(v => !isNaN(v) && v > 0);
+                    if (values.length > 0) {
+                        const min = Math.min(...values).toFixed(1);
+                        const avg = (values.reduce((a, b) => a + b, 0) / values.length).toFixed(1);
+                        const max = Math.max(...values).toFixed(1);
+                        
+                        html += `
+                            <div class="activity-stat">
+                                <div class="activity-stat-label">${stat.label}</div>
+                                <div class="activity-stat-values">
+                                    <span>Min: ${min}</span>
+                                    <span>Avg: ${avg}</span>
+                                    <span>Max: ${max}</span>
+                                </div>
+                            </div>
+                        `;
+                    }
+                });
+                
+                html += '</div></div>';
+            });
+            
+            html += '</div>';
+            
+            // Insights
+            html += '<div class="insights-section"><h3>Workout Insights</h3>';
+            
+            const mostFrequent = Object.entries(activities)
+                .sort((a, b) => b[1].length - a[1].length)[0];
+            html += `<div class="insight-item"><strong>Most Frequent Activity:</strong> ${mostFrequent[0]} (${mostFrequent[1].length} sessions)</div>`;
+            
+            const allStrains = validData.map(w => parseFloat(w['Activity Strain'])).filter(v => !isNaN(v));
+            const avgStrain = (allStrains.reduce((a, b) => a + b, 0) / allStrains.length).toFixed(2);
+            html += `<div class="insight-item"><strong>Average Workout Strain:</strong> ${avgStrain}</div>`;
+            
+            const totalCalories = validData.reduce((sum, w) => sum + (parseFloat(w['Energy burned (cal)']) || 0), 0);
+            html += `<div class="insight-item"><strong>Total Calories Burned:</strong> ${totalCalories.toLocaleString()}</div>`;
+            
+            html += '</div>';
+            
+            document.getElementById('workout-content').innerHTML = html;
+        }
+        
+        // Sleep Dashboard
+        function renderSleepDashboard() {
+            if (sleepData.length === 0) return;
+            
+            const validData = sleepData.filter(d => d['Sleep onset'] && d['Sleep onset'].trim());
+            
+            // Calculate averages
+            const avgPerformance = calculateAverage(validData, 'Sleep performance %');
+            const avgDuration = calculateAverage(validData, 'Asleep duration (min)');
+            const avgEfficiency = calculateAverage(validData, 'Sleep efficiency %');
+            const avgDebt = calculateAverage(validData, 'Sleep debt (min)');
+            
+            let html = `
+                <div class="dashboard-grid">
+                    <div class="metric-card">
+                        <h3>Avg Performance</h3>
+                        <div class="metric-value">${avgPerformance.toFixed(0)}%</div>
+                        <div class="metric-label">Sleep Performance</div>
+                    </div>
+                    <div class="metric-card">
+                        <h3>Avg Duration</h3>
+                        <div class="metric-value">${(avgDuration / 60).toFixed(1)}</div>
+                        <div class="metric-label">Hours Asleep</div>
+                    </div>
+                    <div class="metric-card">
+                        <h3>Avg Efficiency</h3>
+                        <div class="metric-value">${avgEfficiency.toFixed(0)}%</div>
+                        <div class="metric-label">Sleep Efficiency</div>
+                    </div>
+                    <div class="metric-card">
+                        <h3>Avg Debt</h3>
+                        <div class="metric-value">${avgDebt.toFixed(0)}</div>
+                        <div class="metric-label">Minutes</div>
+                    </div>
+                </div>
+            `;
+            
+            // Bell curves for sleep/wake times
+            html += `
+                <div class="chart-container">
+                    <h3>Sleep Time Distribution</h3>
+                    <div class="chart-wrapper">
+                        <canvas id="sleep-time-chart"></canvas>
+                    </div>
+                </div>
+                <div class="chart-container">
+                    <h3>Wake Time Distribution</h3>
+                    <div class="chart-wrapper">
+                        <canvas id="wake-time-chart"></canvas>
+                    </div>
+                </div>
+            `;
+            
+            // Other metrics
+            const chartConfigs = [
+                { title: 'Sleep Performance', field: 'Sleep performance %', color: '#00ff88' },
+                { title: 'Respiratory Rate', field: 'Respiratory rate (rpm)', color: '#00ddff' },
+                { title: 'Asleep Duration (hours)', field: 'Asleep duration (min)', color: '#ffaa00', convert: minToHours },
+                { title: 'In Bed Duration (hours)', field: 'In bed duration (min)', color: '#ff3366', convert: minToHours },
+                { title: 'Light Sleep (hours)', field: 'Light sleep duration (min)', color: '#00ddff', convert: minToHours },
+                { title: 'Deep Sleep (hours)', field: 'Deep (SWS) duration (min)', color: '#00ff88', convert: minToHours },
+                { title: 'REM Sleep (hours)', field: 'REM duration (min)', color: '#ffaa00', convert: minToHours },
+                { title: 'Sleep Debt', field: 'Sleep debt (min)', color: '#ff3366' },
+                { title: 'Sleep Efficiency', field: 'Sleep efficiency %', color: '#00ff88' },
+                { title: 'Sleep Consistency', field: 'Sleep consistency %', color: '#00ddff' }
+            ];
+            
+            chartConfigs.forEach((config, index) => {
+                html += `
+                    <div class="chart-container">
+                        <h3>${config.title}</h3>
+                        <div class="chart-wrapper">
+                            <canvas id="sleep-chart-${index}"></canvas>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            // Insights
+            html += '<div class="insights-section"><h3>Sleep Insights</h3>';
+            
+            const naps = validData.filter(d => d['Nap'] === 'TRUE' || d['Nap'] === true);
+            const napCount = naps.length;
+            html += `<div class="insight-item"><strong>Nap Frequency:</strong> ${napCount} naps recorded</div>`;
+            
+            // Correlation between naps and deep sleep
+            if (napCount > 0) {
+                const napDeepSleep = naps.map(d => parseFloat(d['Deep (SWS) duration (min)'])).filter(v => !isNaN(v));
+                const nonNapDeepSleep = validData.filter(d => d['Nap'] !== 'TRUE' && d['Nap'] !== true)
+                    .map(d => parseFloat(d['Deep (SWS) duration (min)'])).filter(v => !isNaN(v));
+                
+                const avgNapDeep = napDeepSleep.reduce((a, b) => a + b, 0) / napDeepSleep.length;
+                const avgNonNapDeep = nonNapDeepSleep.reduce((a, b) => a + b, 0) / nonNapDeepSleep.length;
+                
+                html += `<div class="insight-item"><strong>Nap Impact on Deep Sleep:</strong> `;
+                html += `Days with naps average ${avgNapDeep.toFixed(0)} min deep sleep vs ${avgNonNapDeep.toFixed(0)} min on non-nap days `;
+                html += `(${((avgNapDeep - avgNonNapDeep) / avgNonNapDeep * 100).toFixed(0)}% difference)</div>`;
+            }
+            
+            const avgSleepTime = getAverageTime(validData, 'Sleep onset');
+            const avgWakeTime = getAverageTime(validData, 'Wake onset');
+            html += `<div class="insight-item"><strong>Average Sleep Schedule:</strong> Sleep at ${avgSleepTime}, wake at ${avgWakeTime}</div>`;
+            
+            const bestNight = validData.reduce((best, current) => {
+                const currentPerf = parseFloat(current['Sleep performance %']) || 0;
+                const bestPerf = parseFloat(best['Sleep performance %']) || 0;
+                return currentPerf > bestPerf ? current : best;
+            });
+            html += `<div class="insight-item"><strong>Best Sleep:</strong> ${bestNight['Sleep performance %']}% on ${new Date(bestNight['Sleep onset']).toLocaleDateString()}</div>`;
+            
+            html += '</div>';
+            
+            document.getElementById('sleep-content').innerHTML = html;
+            
+            // Render charts
+            setTimeout(() => {
+                createTimeDistributionChart('sleep-time-chart', validData, 'Sleep onset', '#00ff88');
+                createTimeDistributionChart('wake-time-chart', validData, 'Wake onset', '#00ddff');
+                
+                chartConfigs.forEach((config, index) => {
+                    createLineChart(`sleep-chart-${index}`, validData, config);
+                });
+            }, 100);
+        }
+        
+        // Helper functions
+        function calculateAverage(data, field) {
+            const values = data.map(d => parseFloat(d[field])).filter(v => !isNaN(v));
+            return values.length > 0 ? values.reduce((a, b) => a + b, 0) / values.length : 0;
+        }
+        
+        function calculateTrend(data, field) {
+            const recent = data.slice(-7);
+            const earlier = data.slice(0, 7);
+            const recentAvg = calculateAverage(recent, field);
+            const earlierAvg = calculateAverage(earlier, field);
+            return recentAvg - earlierAvg;
+        }
+        
+        function celsiusToFahrenheit(celsius) {
+            return celsius * 9/5 + 32;
+        }
+        
+        function minToHours(min) {
+            return min / 60;
+        }
+        
+        function getAverageTime(data, field) {
+            const times = data.map(d => {
+                const date = new Date(d[field]);
+                return date.getHours() * 60 + date.getMinutes();
+            }).filter(v => !isNaN(v));
+            
+            const avgMinutes = times.reduce((a, b) => a + b, 0) / times.length;
+            const hours = Math.floor(avgMinutes / 60) % 24;
+            const mins = Math.floor(avgMinutes % 60);
+            return `${hours.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}`;
+        }
+        
+        function createLineChart(canvasId, data, config) {
+            const ctx = document.getElementById(canvasId);
+            if (!ctx) return;
+            
+            const labels = data.map(d => new Date(d['Cycle start time'] || d['Sleep onset']).toLocaleDateString());
+            let values = data.map(d => parseFloat(d[config.field])).filter(v => !isNaN(v));
+            
+            if (config.convert) {
+                values = values.map(v => config.convert(v));
+            }
+            
+            if (charts[canvasId]) {
+                charts[canvasId].destroy();
+            }
+            
+            charts[canvasId] = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels.slice(0, values.length),
+                    datasets: [{
+                        label: config.title,
+                        data: values,
+                        borderColor: config.color,
+                        backgroundColor: config.color + '20',
+                        borderWidth: 2,
+                        tension: 0.4,
+                        fill: true,
+                        pointRadius: 3,
+                        pointHoverRadius: 6
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        x: {
+                            grid: {
+                                color: 'rgba(255, 255, 255, 0.05)'
+                            },
+                            ticks: {
+                                color: '#a0a0a0',
+                                maxTicksLimit: 10
+                            }
+                        },
+                        y: {
+                            grid: {
+                                color: 'rgba(255, 255, 255, 0.05)'
+                            },
+                            ticks: {
+                                color: '#a0a0a0'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        
+        function createTimeDistributionChart(canvasId, data, field, color) {
+            const ctx = document.getElementById(canvasId);
+            if (!ctx) return;
+            
+            // Convert times to hours (0-24)
+            const hours = data.map(d => {
+                const date = new Date(d[field]);
+                return date.getHours() + date.getMinutes() / 60;
+            }).filter(v => !isNaN(v));
+            
+            // Create histogram
+            const bins = 24;
+            const counts = new Array(bins).fill(0);
+            hours.forEach(hour => {
+                const bin = Math.floor(hour);
+                counts[bin]++;
+            });
+            
+            if (charts[canvasId]) {
+                charts[canvasId].destroy();
+            }
+            
+            charts[canvasId] = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: Array.from({length: bins}, (_, i) => `${i}:00`),
+                    datasets: [{
+                        label: 'Frequency',
+                        data: counts,
+                        backgroundColor: color + '60',
+                        borderColor: color,
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        x: {
+                            grid: {
+                                color: 'rgba(255, 255, 255, 0.05)'
+                            },
+                            ticks: {
+                                color: '#a0a0a0',
+                                maxTicksLimit: 12
+                            }
+                        },
+                        y: {
+                            grid: {
+                                color: 'rgba(255, 255, 255, 0.05)'
+                            },
+                            ticks: {
+                                color: '#a0a0a0',
+                                stepSize: 1
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        
+        // Initialize with saved data
+        window.addEventListener('load', () => {
+            journalData = loadFromLocalStorage('journalData');
+            physioData = loadFromLocalStorage('physioData');
+            workoutData = loadFromLocalStorage('workoutData');
+            sleepData = loadFromLocalStorage('sleepData');
+            
+            if (journalData.length > 0) renderJournalDashboard();
+            if (physioData.length > 0) renderPhysioDashboard();
+            if (workoutData.length > 0) renderWorkoutDashboard();
+            if (sleepData.length > 0) renderSleepDashboard();
+        });
+    </script>
+</body>
+</html>
