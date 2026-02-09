@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -128,26 +129,29 @@
         
         /* Import Section */
         .import-section {
-            background: var(--bg-tertiary);
-            border: 2px dashed var(--border-color);
-            border-radius: 12px;
-            padding: 2rem;
-            margin-bottom: 2rem;
+            background: rgba(21, 26, 33, 0.3);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: 0.8rem 1.2rem;
+            margin-bottom: 1.5rem;
             transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
         }
         
         .import-section:hover {
-            border-color: var(--accent-primary);
-            background: rgba(0, 255, 136, 0.02);
+            background: rgba(21, 26, 33, 0.5);
         }
         
         .import-section h3 {
             font-family: 'JetBrains Mono', monospace;
-            font-size: 1rem;
-            margin-bottom: 1rem;
-            color: var(--accent-secondary);
+            font-size: 0.75rem;
+            margin: 0;
+            color: var(--text-dim);
             text-transform: uppercase;
-            letter-spacing: 0.1em;
+            letter-spacing: 0.05em;
+            flex-shrink: 0;
         }
         
         .file-input-wrapper {
@@ -161,29 +165,31 @@
         
         .file-label {
             display: inline-block;
-            padding: 0.8rem 1.5rem;
-            background: linear-gradient(135deg, var(--accent-primary) 0%, var(--accent-secondary) 100%);
-            color: var(--bg-primary);
+            padding: 0.4rem 0.8rem;
+            background: rgba(0, 255, 136, 0.1);
+            color: var(--text-secondary);
             font-family: 'JetBrains Mono', monospace;
-            font-weight: 700;
-            font-size: 0.85rem;
-            border-radius: 6px;
+            font-weight: 600;
+            font-size: 0.7rem;
+            border-radius: 4px;
             cursor: pointer;
             transition: all 0.3s ease;
             text-transform: uppercase;
             letter-spacing: 0.05em;
+            border: 1px solid rgba(0, 255, 136, 0.2);
         }
         
         .file-label:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 20px rgba(0, 255, 136, 0.3);
+            background: rgba(0, 255, 136, 0.2);
+            color: var(--accent-primary);
+            border-color: var(--accent-primary);
         }
         
         .import-status {
-            margin-top: 1rem;
             font-family: 'JetBrains Mono', monospace;
-            font-size: 0.85rem;
-            color: var(--text-secondary);
+            font-size: 0.7rem;
+            color: var(--text-dim);
+            flex-grow: 1;
         }
         
         .import-status.success {
@@ -268,28 +274,50 @@
         
         /* Insights Section */
         .insights-section {
-            background: linear-gradient(135deg, rgba(0, 255, 136, 0.1) 0%, rgba(0, 221, 255, 0.05) 100%);
-            border: 1px solid var(--accent-primary);
-            border-radius: 12px;
-            padding: 2rem;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 1.5rem;
             margin-bottom: 2rem;
         }
         
-        .insights-section h3 {
+        .insights-column {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1.5rem;
+        }
+        
+        .insights-column.positive {
+            border-left: 3px solid var(--accent-primary);
+        }
+        
+        .insights-column.focus {
+            border-left: 3px solid var(--accent-warning);
+        }
+        
+        .insights-column h3 {
             font-family: 'JetBrains Mono', monospace;
-            font-size: 1rem;
-            margin-bottom: 1.5rem;
-            color: var(--accent-primary);
+            font-size: 0.9rem;
+            margin-bottom: 1rem;
             text-transform: uppercase;
             letter-spacing: 0.1em;
         }
         
+        .insights-column.positive h3 {
+            color: var(--accent-primary);
+        }
+        
+        .insights-column.focus h3 {
+            color: var(--accent-warning);
+        }
+        
         .insight-item {
-            padding: 1rem;
-            background: rgba(0, 0, 0, 0.3);
-            border-left: 3px solid var(--accent-secondary);
-            margin-bottom: 1rem;
+            padding: 0.8rem;
+            background: rgba(0, 0, 0, 0.2);
+            margin-bottom: 0.8rem;
             border-radius: 6px;
+            font-size: 0.9rem;
+            line-height: 1.5;
         }
         
         .insight-item:last-child {
@@ -297,8 +325,15 @@
         }
         
         .insight-item strong {
-            color: var(--accent-secondary);
             font-family: 'JetBrains Mono', monospace;
+        }
+        
+        .insights-column.positive .insight-item strong {
+            color: var(--accent-primary);
+        }
+        
+        .insights-column.focus .insight-item strong {
+            color: var(--accent-warning);
         }
         
         /* Journal Grid */
@@ -325,7 +360,7 @@
         .journal-card h4 {
             font-size: 0.9rem;
             margin-bottom: 0.8rem;
-            color: var(--text-primary);
+            color: var(--accent-primary);
             font-weight: 600;
         }
         
@@ -344,14 +379,19 @@
             font-size: 1.8rem;
             font-weight: 700;
             font-family: 'JetBrains Mono', monospace;
+            color: var(--text-dim);
         }
         
-        .journal-stat-value.yes {
+        .journal-stat-value.highlighted {
             color: var(--accent-primary);
         }
         
+        .journal-stat-value.yes {
+            /* Will be overridden by highlighted class */
+        }
+        
         .journal-stat-value.no {
-            color: var(--text-dim);
+            /* Will be overridden by highlighted class */
         }
         
         .journal-stat-label {
@@ -475,10 +515,10 @@
         <!-- Journal Tab -->
         <div id="journal" class="tab-content active">
             <div class="import-section">
-                <h3>Import Journal Data</h3>
+                <h3>Import:</h3>
                 <div class="file-input-wrapper">
                     <input type="file" id="journal-file" class="file-input" accept=".xlsx,.csv">
-                    <label for="journal-file" class="file-label">Select File</label>
+                    <label for="journal-file" class="file-label">Upload</label>
                 </div>
                 <div id="journal-status" class="import-status"></div>
             </div>
@@ -489,10 +529,10 @@
         <!-- Physiological Tab -->
         <div id="physio" class="tab-content">
             <div class="import-section">
-                <h3>Import Physiological Cycles</h3>
+                <h3>Import:</h3>
                 <div class="file-input-wrapper">
                     <input type="file" id="physio-file" class="file-input" accept=".csv">
-                    <label for="physio-file" class="file-label">Select File</label>
+                    <label for="physio-file" class="file-label">Upload</label>
                 </div>
                 <div id="physio-status" class="import-status"></div>
             </div>
@@ -503,10 +543,10 @@
         <!-- Workouts Tab -->
         <div id="workouts" class="tab-content">
             <div class="import-section">
-                <h3>Import Workout Data</h3>
+                <h3>Import:</h3>
                 <div class="file-input-wrapper">
                     <input type="file" id="workout-file" class="file-input" accept=".csv">
-                    <label for="workout-file" class="file-label">Select File</label>
+                    <label for="workout-file" class="file-label">Upload</label>
                 </div>
                 <div id="workout-status" class="import-status"></div>
             </div>
@@ -517,10 +557,10 @@
         <!-- Sleep Tab -->
         <div id="sleep" class="tab-content">
             <div class="import-section">
-                <h3>Import Sleep Data</h3>
+                <h3>Import:</h3>
                 <div class="file-input-wrapper">
                     <input type="file" id="sleep-file" class="file-input" accept=".csv">
-                    <label for="sleep-file" class="file-label">Select File</label>
+                    <label for="sleep-file" class="file-label">Upload</label>
                 </div>
                 <div id="sleep-status" class="import-status"></div>
             </div>
@@ -546,14 +586,25 @@
             document.getElementById(tabName).classList.add('active');
         }
         
-        // Local storage functions
+        // Local storage functions with error handling
         function saveToLocalStorage(key, data) {
-            localStorage.setItem(key, JSON.stringify(data));
+            try {
+                localStorage.setItem(key, JSON.stringify(data));
+                return true;
+            } catch (e) {
+                console.error('Error saving to localStorage:', e);
+                return false;
+            }
         }
         
         function loadFromLocalStorage(key) {
-            const data = localStorage.getItem(key);
-            return data ? JSON.parse(data) : [];
+            try {
+                const data = localStorage.getItem(key);
+                return data ? JSON.parse(data) : [];
+            } catch (e) {
+                console.error('Error loading from localStorage:', e);
+                return [];
+            }
         }
         
         // Merge new data with existing data, avoiding duplicates by date
@@ -693,17 +744,19 @@
                 const stats = questionStats[question];
                 const total = stats.yes + stats.no;
                 const yesPercent = total > 0 ? ((stats.yes / total) * 100).toFixed(0) : 0;
+                const yesHighlighted = stats.yes >= stats.no ? 'highlighted' : '';
+                const noHighlighted = stats.no > stats.yes ? 'highlighted' : '';
                 
                 html += `
                     <div class="journal-card">
                         <h4>${question}</h4>
                         <div class="journal-stats">
                             <div class="journal-stat">
-                                <div class="journal-stat-value yes">${stats.yes}</div>
+                                <div class="journal-stat-value ${yesHighlighted}">${stats.yes}</div>
                                 <div class="journal-stat-label">Yes (${yesPercent}%)</div>
                             </div>
                             <div class="journal-stat">
-                                <div class="journal-stat-value no">${stats.no}</div>
+                                <div class="journal-stat-value ${noHighlighted}">${stats.no}</div>
                                 <div class="journal-stat-label">No</div>
                             </div>
                         </div>
@@ -713,28 +766,101 @@
             
             html += '</div>';
             
-            // Add insights
-            html += '<div class="insights-section"><h3>Journal Insights</h3>';
+            // Add insights - split into positives and focus areas
+            html += '<div class="insights-section">';
             
-            // Find most common yes answers
+            // Positives
+            html += '<div class="insights-column positive"><h3>✓ Positives</h3>';
+            
             const sortedByYes = Object.entries(questionStats)
                 .sort((a, b) => b[1].yes - a[1].yes)
                 .slice(0, 3);
             
-            html += '<div class="insight-item"><strong>Top Habits:</strong> ';
-            html += sortedByYes.map(([q, s]) => `${q} (${s.yes} times)`).join(', ');
+            html += '<div class="insight-item"><strong>Most Consistent Habits:</strong> ';
+            html += sortedByYes.map(([q, s]) => {
+                const total = s.yes + s.no;
+                const percent = ((s.yes / total) * 100).toFixed(0);
+                return `${q} (${percent}% of days)`;
+            }).join(', ');
             html += '</div>';
             
-            // Find least common activities
+            const healthyHabits = Object.entries(questionStats).filter(([q, s]) => {
+                const total = s.yes + s.no;
+                const percent = (s.yes / total) * 100;
+                return percent > 70 && (
+                    q.includes('Expressed gratitude') || 
+                    q.includes('Practiced breathwork') ||
+                    q.includes('Consumed protein') ||
+                    q.includes('Felt energized') ||
+                    q.includes('vitamin') ||
+                    q.includes('supplement')
+                );
+            });
+            
+            if (healthyHabits.length > 0) {
+                html += '<div class="insight-item"><strong>Strong Health Patterns:</strong> ';
+                html += healthyHabits.map(([q, s]) => {
+                    const total = s.yes + s.no;
+                    const percent = ((s.yes / total) * 100).toFixed(0);
+                    return `${q} (${percent}%)`;
+                }).join(', ');
+                html += '</div>';
+            }
+            
+            html += '</div>';
+            
+            // Focus areas
+            html += '<div class="insights-column focus"><h3>⚡ Focus On</h3>';
+            
             const sortedByNo = Object.entries(questionStats)
                 .sort((a, b) => b[1].no - a[1].no)
-                .slice(0, 3);
+                .filter(([q, s]) => {
+                    const total = s.yes + s.no;
+                    const yesPercent = (s.yes / total) * 100;
+                    return yesPercent < 30 && (
+                        q.includes('Practiced breathwork') ||
+                        q.includes('Expressed gratitude') ||
+                        q.includes('vitamin') ||
+                        q.includes('supplement') ||
+                        q.includes('Consumed protein')
+                    );
+                })
+                .slice(0, 2);
             
-            html += '<div class="insight-item"><strong>Rare Activities:</strong> ';
-            html += sortedByNo.map(([q, s]) => `${q} (only ${s.yes} times)`).join(', ');
-            html += '</div>';
+            if (sortedByNo.length > 0) {
+                html += '<div class="insight-item"><strong>Underdeveloped Habits:</strong> ';
+                html += sortedByNo.map(([q, s]) => {
+                    const total = s.yes + s.no;
+                    const percent = ((s.yes / total) * 100).toFixed(0);
+                    return `${q} (only ${percent}% of days)`;
+                }).join(', ');
+                html += '</div>';
+            }
             
-            html += '</div>';
+            const negativeHabits = Object.entries(questionStats).filter(([q, s]) => {
+                const total = s.yes + s.no;
+                const percent = (s.yes / total) * 100;
+                return percent > 50 && (
+                    q.includes('alcoholic') || 
+                    q.includes('sick') ||
+                    q.includes('Irritable') ||
+                    q.includes('headache')
+                );
+            });
+            
+            if (negativeHabits.length > 0) {
+                html += '<div class="insight-item"><strong>Monitor These:</strong> ';
+                html += negativeHabits.map(([q, s]) => {
+                    const total = s.yes + s.no;
+                    const percent = ((s.yes / total) * 100).toFixed(0);
+                    return `${q} (${percent}% of days)`;
+                }).join(', ');
+                html += '</div>';
+            } else {
+                html += '<div class="insight-item"><strong>Great News:</strong> No concerning negative patterns detected in your data!</div>';
+            }
+            
+            html += '</div></div>';
             
             document.getElementById('journal-content').innerHTML = html;
         }
@@ -800,19 +926,58 @@
                 `;
             });
             
-            // Insights
-            html += '<div class="insights-section"><h3>Physiological Insights</h3>';
+            // Insights - split into positives and focus areas
+            html += '<div class="insights-section">';
+            
+            // Positives
+            html += '<div class="insights-column positive"><h3>✓ Positives</h3>';
             
             const recoveryTrend = calculateTrend(validData, 'Recovery score %');
-            html += `<div class="insight-item"><strong>Recovery Trend:</strong> ${recoveryTrend > 0 ? 'Improving' : 'Declining'} (${Math.abs(recoveryTrend).toFixed(1)}% change)</div>`;
+            if (recoveryTrend > 0) {
+                html += `<div class="insight-item"><strong>Recovery Improving:</strong> Up ${recoveryTrend.toFixed(1)}% from earlier data</div>`;
+            }
             
             const hrvTrend = calculateTrend(validData, 'Heart rate variability (ms)');
-            html += `<div class="insight-item"><strong>HRV Trend:</strong> ${hrvTrend > 0 ? 'Increasing' : 'Decreasing'} (${Math.abs(hrvTrend).toFixed(1)}ms change)</div>`;
+            if (hrvTrend > 0) {
+                html += `<div class="insight-item"><strong>HRV Increasing:</strong> Up ${hrvTrend.toFixed(1)}ms, indicating better recovery capacity</div>`;
+            }
             
-            const highStrainDays = validData.filter(d => parseFloat(d['Day Strain']) > 15).length;
-            html += `<div class="insight-item"><strong>High Strain Days:</strong> ${highStrainDays} days with strain > 15</div>`;
+            if (avgRecovery >= 67) {
+                html += `<div class="insight-item"><strong>Strong Recovery Average:</strong> Your ${avgRecovery.toFixed(0)}% average is in the "green" zone</div>`;
+            }
+            
+            if (recoveryTrend <= 0 && hrvTrend <= 0 && avgRecovery < 67) {
+                html += `<div class="insight-item"><strong>Steady Performance:</strong> Maintaining consistent metrics across the tracking period</div>`;
+            }
             
             html += '</div>';
+            
+            // Focus areas
+            html += '<div class="insights-column focus"><h3>⚡ Focus On</h3>';
+            
+            if (recoveryTrend < 0) {
+                html += `<div class="insight-item"><strong>Recovery Declining:</strong> Down ${Math.abs(recoveryTrend).toFixed(1)}% - consider additional rest days</div>`;
+            }
+            
+            if (hrvTrend < 0) {
+                html += `<div class="insight-item"><strong>HRV Decreasing:</strong> Down ${Math.abs(hrvTrend).toFixed(1)}ms - may indicate accumulated fatigue</div>`;
+            }
+            
+            const highStrainDays = validData.filter(d => parseFloat(d['Day Strain']) > 15).length;
+            const strainPercent = ((highStrainDays / validData.length) * 100).toFixed(0);
+            if (highStrainDays > 0 && strainPercent > 30) {
+                html += `<div class="insight-item"><strong>High Strain Frequency:</strong> ${highStrainDays} days above 15 strain (${strainPercent}% of tracked days) - balance with recovery</div>`;
+            }
+            
+            if (avgRecovery < 50) {
+                html += `<div class="insight-item"><strong>Low Average Recovery:</strong> ${avgRecovery.toFixed(0)}% suggests you may need more sleep or reduced training load</div>`;
+            }
+            
+            if (recoveryTrend >= 0 && hrvTrend >= 0 && avgRecovery >= 67 && strainPercent <= 30) {
+                html += `<div class="insight-item"><strong>Excellent Balance:</strong> You're managing strain and recovery well - keep it up!</div>`;
+            }
+            
+            html += '</div></div>';
             
             document.getElementById('physio-content').innerHTML = html;
             
@@ -844,12 +1009,13 @@
             
             Object.keys(activities).sort().forEach(activity => {
                 const workouts = activities[activity];
+                const workoutCount = workouts.length;
                 
                 html += `
                     <div class="activity-card">
                         <h4>${activity}</h4>
                         <div style="margin-bottom: 1rem; color: var(--text-secondary);">
-                            Total workouts: ${workouts.length}
+                            Total workouts: ${workoutCount}
                         </div>
                         <div class="activity-stats">
                 `;
@@ -865,20 +1031,34 @@
                 stats.forEach(stat => {
                     const values = workouts.map(w => parseFloat(w[stat.field])).filter(v => !isNaN(v) && v > 0);
                     if (values.length > 0) {
-                        const min = Math.min(...values).toFixed(1);
                         const avg = (values.reduce((a, b) => a + b, 0) / values.length).toFixed(1);
-                        const max = Math.max(...values).toFixed(1);
                         
-                        html += `
-                            <div class="activity-stat">
-                                <div class="activity-stat-label">${stat.label}</div>
-                                <div class="activity-stat-values">
-                                    <span>Min: ${min}</span>
-                                    <span>Avg: ${avg}</span>
-                                    <span>Max: ${max}</span>
+                        if (workoutCount === 1) {
+                            // Only show average for single workout
+                            html += `
+                                <div class="activity-stat">
+                                    <div class="activity-stat-label">${stat.label}</div>
+                                    <div class="activity-stat-values">
+                                        <span>${avg}</span>
+                                    </div>
                                 </div>
-                            </div>
-                        `;
+                            `;
+                        } else {
+                            // Show min/avg/max for multiple workouts
+                            const min = Math.min(...values).toFixed(1);
+                            const max = Math.max(...values).toFixed(1);
+                            
+                            html += `
+                                <div class="activity-stat">
+                                    <div class="activity-stat-label">${stat.label}</div>
+                                    <div class="activity-stat-values">
+                                        <span>Min: ${min}</span>
+                                        <span>Avg: ${avg}</span>
+                                        <span>Max: ${max}</span>
+                                    </div>
+                                </div>
+                            `;
+                        }
                     }
                 });
                 
@@ -887,21 +1067,57 @@
             
             html += '</div>';
             
-            // Insights
-            html += '<div class="insights-section"><h3>Workout Insights</h3>';
+            // Insights - split into positives and focus areas
+            html += '<div class="insights-section">';
+            
+            // Positives
+            html += '<div class="insights-column positive"><h3>✓ Positives</h3>';
             
             const mostFrequent = Object.entries(activities)
                 .sort((a, b) => b[1].length - a[1].length)[0];
-            html += `<div class="insight-item"><strong>Most Frequent Activity:</strong> ${mostFrequent[0]} (${mostFrequent[1].length} sessions)</div>`;
-            
-            const allStrains = validData.map(w => parseFloat(w['Activity Strain'])).filter(v => !isNaN(v));
-            const avgStrain = (allStrains.reduce((a, b) => a + b, 0) / allStrains.length).toFixed(2);
-            html += `<div class="insight-item"><strong>Average Workout Strain:</strong> ${avgStrain}</div>`;
+            html += `<div class="insight-item"><strong>Most Consistent Activity:</strong> ${mostFrequent[0]} with ${mostFrequent[1].length} sessions shows great dedication</div>`;
             
             const totalCalories = validData.reduce((sum, w) => sum + (parseFloat(w['Energy burned (cal)']) || 0), 0);
-            html += `<div class="insight-item"><strong>Total Calories Burned:</strong> ${totalCalories.toLocaleString()}</div>`;
+            const avgCaloriesPerWorkout = (totalCalories / validData.length).toFixed(0);
+            html += `<div class="insight-item"><strong>Total Energy Output:</strong> ${totalCalories.toLocaleString()} calories burned across all workouts</div>`;
+            
+            const varietyCount = Object.keys(activities).length;
+            if (varietyCount >= 3) {
+                html += `<div class="insight-item"><strong>Great Variety:</strong> ${varietyCount} different activities keeps training balanced and engaging</div>`;
+            }
             
             html += '</div>';
+            
+            // Focus areas
+            html += '<div class="insights-column focus"><h3>⚡ Focus On</h3>';
+            
+            const allStrains = validData.map(w => parseFloat(w['Activity Strain'])).filter(v => !isNaN(v) && v > 0);
+            const avgStrain = allStrains.length > 0 ? (allStrains.reduce((a, b) => a + b, 0) / allStrains.length).toFixed(2) : 0;
+            
+            if (avgStrain < 8) {
+                html += `<div class="insight-item"><strong>Low Average Strain:</strong> ${avgStrain} suggests workouts could be more intense for greater adaptation</div>`;
+            }
+            
+            const lowFrequencyActivities = Object.entries(activities)
+                .filter(([name, workouts]) => workouts.length === 1)
+                .map(([name]) => name);
+            
+            if (lowFrequencyActivities.length >= 2) {
+                html += `<div class="insight-item"><strong>Sporadic Activities:</strong> ${lowFrequencyActivities.slice(0, 2).join(', ')} - consider making these regular habits</div>`;
+            }
+            
+            if (varietyCount < 3) {
+                html += `<div class="insight-item"><strong>Limited Variety:</strong> Try adding 1-2 new activity types to improve overall fitness</div>`;
+            }
+            
+            const workoutsPerWeek = (validData.length / (validData.length > 0 ? 
+                (new Date(validData[validData.length - 1]['Workout start time']) - new Date(validData[0]['Workout start time'])) / (7 * 24 * 60 * 60 * 1000) : 1)).toFixed(1);
+            
+            if (workoutsPerWeek < 3) {
+                html += `<div class="insight-item"><strong>Workout Frequency:</strong> Currently ${workoutsPerWeek} workouts/week - aim for 3-5 for optimal results</div>`;
+            }
+            
+            html += '</div></div>';
             
             document.getElementById('workout-content').innerHTML = html;
         }
@@ -984,39 +1200,78 @@
                 `;
             });
             
-            // Insights
-            html += '<div class="insights-section"><h3>Sleep Insights</h3>';
+            // Insights - split into positives and focus areas
+            html += '<div class="insights-section">';
             
-            const naps = validData.filter(d => d['Nap'] === 'TRUE' || d['Nap'] === true);
-            const napCount = naps.length;
-            html += `<div class="insight-item"><strong>Nap Frequency:</strong> ${napCount} naps recorded</div>`;
+            // Positives
+            html += '<div class="insights-column positive"><h3>✓ Positives</h3>';
             
-            // Correlation between naps and deep sleep
-            if (napCount > 0) {
-                const napDeepSleep = naps.map(d => parseFloat(d['Deep (SWS) duration (min)'])).filter(v => !isNaN(v));
-                const nonNapDeepSleep = validData.filter(d => d['Nap'] !== 'TRUE' && d['Nap'] !== true)
-                    .map(d => parseFloat(d['Deep (SWS) duration (min)'])).filter(v => !isNaN(v));
-                
-                const avgNapDeep = napDeepSleep.reduce((a, b) => a + b, 0) / napDeepSleep.length;
-                const avgNonNapDeep = nonNapDeepSleep.reduce((a, b) => a + b, 0) / nonNapDeepSleep.length;
-                
-                html += `<div class="insight-item"><strong>Nap Impact on Deep Sleep:</strong> `;
-                html += `Days with naps average ${avgNapDeep.toFixed(0)} min deep sleep vs ${avgNonNapDeep.toFixed(0)} min on non-nap days `;
-                html += `(${((avgNapDeep - avgNonNapDeep) / avgNonNapDeep * 100).toFixed(0)}% difference)</div>`;
+            if (avgPerformance >= 85) {
+                html += `<div class="insight-item"><strong>Excellent Sleep Quality:</strong> ${avgPerformance.toFixed(0)}% average performance is outstanding</div>`;
+            } else if (avgPerformance >= 70) {
+                html += `<div class="insight-item"><strong>Good Sleep Quality:</strong> ${avgPerformance.toFixed(0)}% average performance shows solid recovery</div>`;
+            }
+            
+            if (avgEfficiency >= 90) {
+                html += `<div class="insight-item"><strong>High Efficiency:</strong> ${avgEfficiency.toFixed(0)}% means you're spending most of your time in bed actually sleeping</div>`;
             }
             
             const avgSleepTime = getAverageTime(validData, 'Sleep onset');
             const avgWakeTime = getAverageTime(validData, 'Wake onset');
-            html += `<div class="insight-item"><strong>Average Sleep Schedule:</strong> Sleep at ${avgSleepTime}, wake at ${avgWakeTime}</div>`;
+            html += `<div class="insight-item"><strong>Consistent Schedule:</strong> Average sleep at ${avgSleepTime}, wake at ${avgWakeTime}</div>`;
             
             const bestNight = validData.reduce((best, current) => {
                 const currentPerf = parseFloat(current['Sleep performance %']) || 0;
                 const bestPerf = parseFloat(best['Sleep performance %']) || 0;
                 return currentPerf > bestPerf ? current : best;
             });
-            html += `<div class="insight-item"><strong>Best Sleep:</strong> ${bestNight['Sleep performance %']}% on ${new Date(bestNight['Sleep onset']).toLocaleDateString()}</div>`;
+            const bestDate = new Date(bestNight['Sleep onset']).toLocaleDateString();
+            html += `<div class="insight-item"><strong>Best Sleep:</strong> ${bestNight['Sleep performance %']}% on ${bestDate}</div>`;
             
             html += '</div>';
+            
+            // Focus areas
+            html += '<div class="insights-column focus"><h3>⚡ Focus On</h3>';
+            
+            if (avgDebt > 60) {
+                html += `<div class="insight-item"><strong>High Sleep Debt:</strong> Average ${avgDebt.toFixed(0)} minutes (${(avgDebt / 60).toFixed(1)} hours) - prioritize getting to bed earlier</div>`;
+            } else if (avgDebt > 30) {
+                html += `<div class="insight-item"><strong>Moderate Sleep Debt:</strong> ${avgDebt.toFixed(0)} minutes - try adding 30-60 min to your sleep window</div>`;
+            }
+            
+            if (avgPerformance < 70) {
+                html += `<div class="insight-item"><strong>Sleep Performance:</strong> ${avgPerformance.toFixed(0)}% average suggests room for improvement in sleep quality</div>`;
+            }
+            
+            const naps = validData.filter(d => d['Nap'] === 'TRUE' || d['Nap'] === true);
+            const napCount = naps.length;
+            
+            if (napCount > 0) {
+                const napDeepSleep = naps.map(d => parseFloat(d['Deep (SWS) duration (min)'])).filter(v => !isNaN(v));
+                const nonNapDeepSleep = validData.filter(d => d['Nap'] !== 'TRUE' && d['Nap'] !== true)
+                    .map(d => parseFloat(d['Deep (SWS) duration (min)'])).filter(v => !isNaN(v));
+                
+                if (napDeepSleep.length > 0 && nonNapDeepSleep.length > 0) {
+                    const avgNapDeep = napDeepSleep.reduce((a, b) => a + b, 0) / napDeepSleep.length;
+                    const avgNonNapDeep = nonNapDeepSleep.reduce((a, b) => a + b, 0) / nonNapDeepSleep.length;
+                    const difference = ((avgNapDeep - avgNonNapDeep) / avgNonNapDeep * 100).toFixed(0);
+                    
+                    if (avgNapDeep < avgNonNapDeep) {
+                        html += `<div class="insight-item"><strong>Nap Impact:</strong> Days with naps show ${Math.abs(difference)}% less deep sleep (${avgNapDeep.toFixed(0)}min vs ${avgNonNapDeep.toFixed(0)}min) - consider timing naps earlier</div>`;
+                    }
+                }
+            }
+            
+            const avgAwakeDuration = calculateAverage(validData, 'Awake duration (min)');
+            if (avgAwakeDuration > 45) {
+                html += `<div class="insight-item"><strong>Wake Time:</strong> Average ${avgAwakeDuration.toFixed(0)} minutes awake - work on sleep hygiene to reduce disruptions</div>`;
+            }
+            
+            if (avgEfficiency < 85) {
+                html += `<div class="insight-item"><strong>Sleep Efficiency:</strong> ${avgEfficiency.toFixed(0)}% suggests spending too much time awake in bed - adjust bedtime routine</div>`;
+            }
+            
+            html += '</div></div>';
             
             document.getElementById('sleep-content').innerHTML = html;
             
@@ -1062,7 +1317,18 @@
             const avgMinutes = times.reduce((a, b) => a + b, 0) / times.length;
             const hours = Math.floor(avgMinutes / 60) % 24;
             const mins = Math.floor(avgMinutes % 60);
-            return `${hours.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}`;
+            return formatTime12Hour(hours, mins);
+        }
+        
+        function formatTime12Hour(hours, minutes) {
+            const period = hours >= 12 ? 'PM' : 'AM';
+            const hour12 = hours % 12 || 12;
+            return `${hour12}:${minutes.toString().padStart(2, '0')} ${period}`;
+        }
+        
+        function formatDateTime12Hour(dateStr) {
+            const date = new Date(dateStr);
+            return formatTime12Hour(date.getHours(), date.getMinutes());
         }
         
         function createLineChart(canvasId, data, config) {
@@ -1145,6 +1411,13 @@
                 counts[bin]++;
             });
             
+            // Create 12-hour labels
+            const labels = Array.from({length: bins}, (_, i) => {
+                const period = i >= 12 ? 'PM' : 'AM';
+                const hour12 = i % 12 || 12;
+                return `${hour12}${period}`;
+            });
+            
             if (charts[canvasId]) {
                 charts[canvasId].destroy();
             }
@@ -1152,7 +1425,7 @@
             charts[canvasId] = new Chart(ctx, {
                 type: 'bar',
                 data: {
-                    labels: Array.from({length: bins}, (_, i) => `${i}:00`),
+                    labels: labels,
                     datasets: [{
                         label: 'Frequency',
                         data: counts,
