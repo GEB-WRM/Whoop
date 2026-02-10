@@ -50,9 +50,12 @@
             top: 0;
             z-index: 100;
             box-shadow: var(--shadow);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
         }
         
-        .header h1 {
+        .header-left h1 {
             font-family: 'JetBrains Mono', monospace;
             font-size: 1.8rem;
             font-weight: 900;
@@ -63,11 +66,22 @@
             background-clip: text;
         }
         
-        .header p {
+        .header-left p {
             color: var(--text-secondary);
             font-size: 0.9rem;
             margin-top: 0.3rem;
             font-weight: 300;
+        }
+        
+        .header-right {
+            text-align: right;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+        }
+        
+        .header-right div {
+            margin: 0.2rem 0;
         }
         
         /* Tabs */
@@ -386,20 +400,111 @@
             color: var(--accent-primary);
         }
         
-        .journal-stat-value.yes {
-            /* Will be overridden by highlighted class */
-        }
-        
-        .journal-stat-value.no {
-            /* Will be overridden by highlighted class */
-        }
-        
         .journal-stat-label {
             font-size: 0.75rem;
             color: var(--text-secondary);
             text-transform: uppercase;
             letter-spacing: 0.05em;
             margin-top: 0.3rem;
+        }
+        
+        .journal-gauge {
+            margin: 1rem 0 0.5rem 0;
+            height: 60px;
+            position: relative;
+            display: flex;
+            justify-content: center;
+            align-items: flex-end;
+            background: radial-gradient(circle at center bottom, rgba(96, 96, 96, 0.2) 0%, transparent 70%);
+            border-radius: 8px 8px 0 0;
+        }
+        
+        .journal-gauge-arc {
+            position: absolute;
+            bottom: 0;
+            width: 120px;
+            height: 60px;
+            border: 2px solid rgba(96, 96, 96, 0.5);
+            border-bottom: none;
+            border-radius: 120px 120px 0 0;
+        }
+        
+        .journal-gauge-arc::before {
+            content: '';
+            position: absolute;
+            left: -2px;
+            bottom: 0;
+            width: 2px;
+            height: 12px;
+            background: #000;
+        }
+        
+        .journal-gauge-arc::after {
+            content: '';
+            position: absolute;
+            right: -2px;
+            bottom: 0;
+            width: 2px;
+            height: 12px;
+            background: #000;
+        }
+        
+        .journal-gauge-ticks {
+            position: absolute;
+            bottom: 0;
+            width: 120px;
+            height: 60px;
+        }
+        
+        .journal-gauge-ticks::before {
+            content: '';
+            position: absolute;
+            left: 50%;
+            bottom: 0;
+            width: 2px;
+            height: 8px;
+            background: #000;
+            transform: translateX(-50%);
+        }
+        
+        .journal-needle {
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            width: 3px;
+            height: 50px;
+            transform-origin: bottom center;
+            transition: all 0.5s cubic-bezier(0.4, 0.0, 0.2, 1);
+            z-index: 2;
+        }
+        
+        .journal-needle::before {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: var(--bg-tertiary);
+            border: 2px solid;
+            border-color: inherit;
+            z-index: 3;
+        }
+        
+        .journal-needle::after {
+            content: '';
+            position: absolute;
+            bottom: 5px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 0;
+            height: 0;
+            border-left: 5px solid transparent;
+            border-right: 5px solid transparent;
+            border-bottom: 45px solid;
+            border-bottom-color: inherit;
         }
         
         /* Activity Cards */
@@ -500,15 +605,22 @@
 </head>
 <body>
     <div class="header">
-        <h1>WHOOP ANALYTICS</h1>
-        <p>Advanced Performance Tracking & Insights</p>
+        <div class="header-left">
+            <h1>WHOOP ANALYTICS</h1>
+            <p>Advanced Performance Tracking & Insights</p>
+        </div>
+        <div class="header-right">
+            <div id="user-name">Your Name</div>
+            <div id="date-range">Loading...</div>
+            <div id="days-count"></div>
+        </div>
     </div>
     
     <div class="tabs">
-        <button class="tab active" onclick="switchTab('journal')">Journal</button>
-        <button class="tab" onclick="switchTab('physio')">Health Trends</button>
-        <button class="tab" onclick="switchTab('workouts')">Workouts</button>
-        <button class="tab" onclick="switchTab('sleep')">Sleep</button>
+        <button class="tab active" data-tab="journal">Journal</button>
+        <button class="tab" data-tab="physio">Health Trends</button>
+        <button class="tab" data-tab="workouts">Workouts</button>
+        <button class="tab" data-tab="sleep">Sleep</button>
     </div>
     
     <div class="content">
@@ -577,14 +689,19 @@
         let sleepData = [];
         let charts = {};
         
-        // Tab switching
-        function switchTab(tabName) {
-            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-            
-            event.target.classList.add('active');
-            document.getElementById(tabName).classList.add('active');
-        }
+        // Tab switching using event delegation - FIXED VERSION
+        document.addEventListener('DOMContentLoaded', function() {
+            document.querySelector('.tabs').addEventListener('click', function(e) {
+                if (e.target.classList.contains('tab')) {
+                    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                    document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+                    
+                    e.target.classList.add('active');
+                    const tabName = e.target.getAttribute('data-tab');
+                    document.getElementById(tabName).classList.add('active');
+                }
+            });
+        });
         
         // Local storage functions with error handling
         function saveToLocalStorage(key, data) {
@@ -616,11 +733,13 @@
             );
         }
         
-        // File upload handlers
-        document.getElementById('journal-file').addEventListener('change', handleJournalUpload);
-        document.getElementById('physio-file').addEventListener('change', handlePhysioUpload);
-        document.getElementById('workout-file').addEventListener('change', handleWorkoutUpload);
-        document.getElementById('sleep-file').addEventListener('change', handleSleepUpload);
+        // File upload handlers - attach after DOM loads
+        document.addEventListener('DOMContentLoaded', function() {
+            document.getElementById('journal-file').addEventListener('change', handleJournalUpload);
+            document.getElementById('physio-file').addEventListener('change', handlePhysioUpload);
+            document.getElementById('workout-file').addEventListener('change', handleWorkoutUpload);
+            document.getElementById('sleep-file').addEventListener('change', handleSleepUpload);
+        });
         
         function handleJournalUpload(e) {
             const file = e.target.files[0];
@@ -638,6 +757,7 @@
                     saveToLocalStorage('journalData', journalData);
                     
                     renderJournalDashboard();
+                    updateHeaderInfo();
                     document.getElementById('journal-status').textContent = `✓ Imported ${data.length} entries (${journalData.length} total)`;
                     document.getElementById('journal-status').className = 'import-status success';
                 } catch (error) {
@@ -661,6 +781,7 @@
                         saveToLocalStorage('physioData', physioData);
                         
                         renderPhysioDashboard();
+                        updateHeaderInfo();
                         document.getElementById('physio-status').textContent = `✓ Imported ${results.data.length} cycles (${physioData.length} total)`;
                         document.getElementById('physio-status').className = 'import-status success';
                     } catch (error) {
@@ -684,6 +805,7 @@
                         saveToLocalStorage('workoutData', workoutData);
                         
                         renderWorkoutDashboard();
+                        updateHeaderInfo();
                         document.getElementById('workout-status').textContent = `✓ Imported ${results.data.length} workouts (${workoutData.length} total)`;
                         document.getElementById('workout-status').className = 'import-status success';
                     } catch (error) {
@@ -707,6 +829,7 @@
                         saveToLocalStorage('sleepData', sleepData);
                         
                         renderSleepDashboard();
+                        updateHeaderInfo();
                         document.getElementById('sleep-status').textContent = `✓ Imported ${results.data.length} sleep sessions (${sleepData.length} total)`;
                         document.getElementById('sleep-status').className = 'import-status success';
                     } catch (error) {
@@ -721,7 +844,7 @@
         function renderJournalDashboard() {
             if (journalData.length === 0) return;
             
-            // Filter out masturbate entries
+            // Filter out masturbation entries
             const filteredData = journalData.filter(entry => {
                 const question = (entry['Question text'] || '').toLowerCase();
                 return !question.includes('masturbat');
@@ -744,14 +867,19 @@
                 }
             });
             
-            // Calculate health score
-            const healthScore = calculateHealthScore(questionStats);
+            // Generate insights based on correlations
+            const insights = generateJournalInsights(filteredData, questionStats);
             
             let html = `
-                <div class="metric-card" style="margin-bottom: 2rem; grid-column: 1 / -1; max-width: 400px;">
-                    <h3>Overall Health Score</h3>
-                    <div class="metric-value">${healthScore}/10</div>
-                    <div class="metric-label">Based on habit consistency</div>
+                <div class="insights-section" style="margin-bottom: 2rem;">
+                    <div class="insights-column positive">
+                        <h3>✓ Positive Insights</h3>
+                        ${insights.positive.map(insight => `<div class="insight-item">${insight}</div>`).join('')}
+                    </div>
+                    <div class="insights-column focus" style="border-left-color: var(--accent-danger);">
+                        <h3>⚠ Alarms</h3>
+                        ${insights.alarms.map(alarm => `<div class="insight-item">${alarm}</div>`).join('')}
+                    </div>
                 </div>
                 <div class="journal-grid">
             `;
@@ -764,17 +892,29 @@
                 const yesHighlighted = stats.yes >= stats.no ? 'highlighted' : '';
                 const noHighlighted = stats.no > stats.yes ? 'highlighted' : '';
                 
+                // Calculate needle rotation: -90deg (No/left) to +90deg (Yes/right)
+                // yesPercent: 0% = -90deg, 50% = 0deg, 100% = +90deg
+                const needleRotation = (yesPercent / 100) * 180 - 90;
+                
+                // Needle is blue
+                const needleColor = 'var(--accent-secondary)';
+                
                 html += `
                     <div class="journal-card">
                         <h4>${question}</h4>
+                        <div class="journal-gauge">
+                            <div class="journal-gauge-arc"></div>
+                            <div class="journal-gauge-ticks"></div>
+                            <div class="journal-needle" style="transform: rotate(${needleRotation}deg); border-color: ${needleColor}; box-shadow: 0 0 10px rgba(0, 221, 255, 0.6);"></div>
+                        </div>
                         <div class="journal-stats">
-                            <div class="journal-stat">
-                                <div class="journal-stat-value ${yesHighlighted}">${stats.yes}</div>
-                                <div class="journal-stat-label">Yes (${yesPercent}%)</div>
-                            </div>
                             <div class="journal-stat">
                                 <div class="journal-stat-value ${noHighlighted}">${stats.no}</div>
                                 <div class="journal-stat-label">No (${noPercent}%)</div>
+                            </div>
+                            <div class="journal-stat">
+                                <div class="journal-stat-value ${yesHighlighted}">${stats.yes}</div>
+                                <div class="journal-stat-label">Yes (${yesPercent}%)</div>
                             </div>
                         </div>
                     </div>
@@ -782,158 +922,9 @@
             });
             
             html += '</div>';
-            
-            // Add insights - split into positives and focus areas
-            html += '<div class="insights-section">';
-            
-            // Positives
-            html += '<div class="insights-column positive"><h3>✓ Positives</h3>';
-            
-            const sortedByYes = Object.entries(questionStats)
-                .sort((a, b) => b[1].yes - a[1].yes)
-                .slice(0, 3);
-            
-            html += '<div class="insight-item"><strong>Most Consistent Habits:</strong> ';
-            html += sortedByYes.map(([q, s]) => {
-                const total = s.yes + s.no;
-                const percent = ((s.yes / total) * 100).toFixed(0);
-                return `${q} (${percent}% of days)`;
-            }).join(', ');
-            html += '</div>';
-            
-            const healthyHabits = Object.entries(questionStats).filter(([q, s]) => {
-                const total = s.yes + s.no;
-                const percent = (s.yes / total) * 100;
-                return percent > 70 && (
-                    q.includes('Expressed gratitude') || 
-                    q.includes('Practiced breathwork') ||
-                    q.includes('Consumed protein') ||
-                    q.includes('Felt energized') ||
-                    q.includes('vitamin') ||
-                    q.includes('supplement')
-                );
-            });
-            
-            if (healthyHabits.length > 0) {
-                html += '<div class="insight-item"><strong>Strong Health Patterns:</strong> ';
-                html += healthyHabits.map(([q, s]) => {
-                    const total = s.yes + s.no;
-                    const percent = ((s.yes / total) * 100).toFixed(0);
-                    return `${q} (${percent}%)`;
-                }).join(', ');
-                html += '</div>';
-            }
-            
-            html += '</div>';
-            
-            // Focus areas
-            html += '<div class="insights-column focus"><h3>⚡ Focus On</h3>';
-            
-            const sortedByNo = Object.entries(questionStats)
-                .sort((a, b) => b[1].no - a[1].no)
-                .filter(([q, s]) => {
-                    const total = s.yes + s.no;
-                    const yesPercent = (s.yes / total) * 100;
-                    return yesPercent < 30 && (
-                        q.includes('Practiced breathwork') ||
-                        q.includes('Expressed gratitude') ||
-                        q.includes('vitamin') ||
-                        q.includes('supplement') ||
-                        q.includes('Consumed protein')
-                    );
-                })
-                .slice(0, 2);
-            
-            if (sortedByNo.length > 0) {
-                html += '<div class="insight-item"><strong>Underdeveloped Habits:</strong> ';
-                html += sortedByNo.map(([q, s]) => {
-                    const total = s.yes + s.no;
-                    const percent = ((s.yes / total) * 100).toFixed(0);
-                    return `${q} (only ${percent}% of days)`;
-                }).join(', ');
-                html += '</div>';
-            }
-            
-            const negativeHabits = Object.entries(questionStats).filter(([q, s]) => {
-                const total = s.yes + s.no;
-                const percent = (s.yes / total) * 100;
-                return percent > 50 && (
-                    q.includes('alcoholic') || 
-                    q.includes('sick') ||
-                    q.includes('Irritable') ||
-                    q.includes('headache')
-                );
-            });
-            
-            if (negativeHabits.length > 0) {
-                html += '<div class="insight-item"><strong>Monitor These:</strong> ';
-                html += negativeHabits.map(([q, s]) => {
-                    const total = s.yes + s.no;
-                    const percent = ((s.yes / total) * 100).toFixed(0);
-                    return `${q} (${percent}% of days)`;
-                }).join(', ');
-                html += '</div>';
-            } else {
-                html += '<div class="insight-item"><strong>Great News:</strong> No concerning negative patterns detected in your data!</div>';
-            }
-            
-            html += '</div></div>';
-            
             document.getElementById('journal-content').innerHTML = html;
         }
         
-        function calculateHealthScore(questionStats) {
-            let score = 5; // Start at baseline
-            
-            // Positive habits (add points)
-            const positiveHabits = [
-                'Expressed gratitude',
-                'Practiced breathwork',
-                'Consumed protein',
-                'Felt energized',
-                'vitamin D',
-                'magnesium',
-                'creatine',
-                'intermittent fasting'
-            ];
-            
-            // Negative habits (subtract points)
-            const negativeHabits = [
-                'alcoholic drinks',
-                'sick or ill',
-                'Irritable',
-                'headache',
-                'fever'
-            ];
-            
-            Object.entries(questionStats).forEach(([question, stats]) => {
-                const total = stats.yes + stats.no;
-                const yesPercent = (stats.yes / total) * 100;
-                
-                // Check positive habits
-                positiveHabits.forEach(habit => {
-                    if (question.toLowerCase().includes(habit.toLowerCase())) {
-                        if (yesPercent > 80) score += 0.5;
-                        else if (yesPercent > 60) score += 0.3;
-                        else if (yesPercent < 20) score -= 0.2;
-                    }
-                });
-                
-                // Check negative habits
-                negativeHabits.forEach(habit => {
-                    if (question.toLowerCase().includes(habit.toLowerCase())) {
-                        if (yesPercent > 50) score -= 0.5;
-                        else if (yesPercent > 30) score -= 0.3;
-                        else if (yesPercent < 10) score += 0.2;
-                    }
-                });
-            });
-            
-            // Cap at 1-10
-            return Math.max(1, Math.min(10, Math.round(score * 10) / 10));
-        }
-        
-        // Physiological Dashboard
         function renderPhysioDashboard() {
             if (physioData.length === 0) return;
             
@@ -945,16 +936,23 @@
             const avgRHR = calculateAverage(validData, 'Resting heart rate (bpm)');
             const avgStrain = calculateAverage(validData, 'Day Strain');
             
-            // Calculate health score
-            const healthScore = calculatePhysioHealthScore(validData, avgRecovery, avgHRV, avgRHR, avgStrain);
+            
+            // Generate insights
+            const physioInsights = generatePhysioInsights(validData, avgRecovery, avgHRV, avgRHR, avgStrain);
             
             let html = `
-                <div class="dashboard-grid">
-                    <div class="metric-card">
-                        <h3>Health Score</h3>
-                        <div class="metric-value">${healthScore}/10</div>
-                        <div class="metric-label">Overall Health Rating</div>
+                <div class="insights-section" style="margin-bottom: 2rem;">
+                    <div class="insights-column positive">
+                        <h3>✓ Positive Insights</h3>
+                        ${physioInsights.positive.map(insight => `<div class="insight-item">${insight}</div>`).join('')}
                     </div>
+                    <div class="insights-column focus" style="border-left-color: var(--accent-danger);">
+                        <h3>⚠ Alarms</h3>
+                        ${physioInsights.alarms.map(alarm => `<div class="insight-item">${alarm}</div>`).join('')}
+                    </div>
+                </div>
+                <div class="dashboard-grid">
+                <div class="dashboard-grid">
                     <div class="metric-card">
                         <h3>Avg Recovery</h3>
                         <div class="metric-value">${avgRecovery.toFixed(0)}%</div>
@@ -978,23 +976,7 @@
                 </div>
             `;
             
-            // Sleep and wake time bell curves
-            html += `
-                <div class="chart-container">
-                    <h3>Bedtime Distribution</h3>
-                    <div class="chart-wrapper">
-                        <canvas id="physio-bedtime-chart"></canvas>
-                    </div>
-                </div>
-                <div class="chart-container">
-                    <h3>Wake Time Distribution</h3>
-                    <div class="chart-wrapper">
-                        <canvas id="physio-waketime-chart"></canvas>
-                    </div>
-                </div>
-            `;
-            
-            // Charts with trend annotations
+            // Add charts
             const chartConfigs = [
                 { title: 'Recovery Score', field: 'Recovery score %', color: '#00ff88' },
                 { title: 'Resting Heart Rate', field: 'Resting heart rate (bpm)', color: '#ff3366' },
@@ -1026,111 +1008,168 @@
                 `;
             });
             
-            // Insights - split into positives and focus areas
-            html += '<div class="insights-section">';
-            
-            // Positives
-            html += '<div class="insights-column positive"><h3>✓ Positives</h3>';
-            
-            const recoveryTrend = calculateTrend(validData, 'Recovery score %');
-            if (recoveryTrend > 0) {
-                html += `<div class="insight-item"><strong>Recovery Improving:</strong> Up ${recoveryTrend.toFixed(1)}% from earlier data</div>`;
-            }
-            
-            const hrvTrend = calculateTrend(validData, 'Heart rate variability (ms)');
-            if (hrvTrend > 0) {
-                html += `<div class="insight-item"><strong>HRV Increasing:</strong> Up ${hrvTrend.toFixed(1)}ms, indicating better recovery capacity</div>`;
-            }
-            
-            if (avgRecovery >= 67) {
-                html += `<div class="insight-item"><strong>Strong Recovery Average:</strong> Your ${avgRecovery.toFixed(0)}% average is in the "green" zone</div>`;
-            }
-            
-            if (recoveryTrend <= 0 && hrvTrend <= 0 && avgRecovery < 67) {
-                html += `<div class="insight-item"><strong>Steady Performance:</strong> Maintaining consistent metrics across the tracking period</div>`;
-            }
-            
-            html += '</div>';
-            
-            // Focus areas
-            html += '<div class="insights-column focus"><h3>⚡ Focus On</h3>';
-            
-            if (recoveryTrend < 0) {
-                html += `<div class="insight-item"><strong>Recovery Declining:</strong> Down ${Math.abs(recoveryTrend).toFixed(1)}% - consider additional rest days</div>`;
-            }
-            
-            if (hrvTrend < 0) {
-                html += `<div class="insight-item"><strong>HRV Decreasing:</strong> Down ${Math.abs(hrvTrend).toFixed(1)}ms - may indicate accumulated fatigue</div>`;
-            }
-            
-            const highStrainDays = validData.filter(d => parseFloat(d['Day Strain']) > 15).length;
-            const strainPercent = ((highStrainDays / validData.length) * 100).toFixed(0);
-            if (highStrainDays > 0 && strainPercent > 30) {
-                html += `<div class="insight-item"><strong>High Strain Frequency:</strong> ${highStrainDays} days above 15 strain (${strainPercent}% of tracked days) - balance with recovery</div>`;
-            }
-            
-            if (avgRecovery < 50) {
-                html += `<div class="insight-item"><strong>Low Average Recovery:</strong> ${avgRecovery.toFixed(0)}% suggests you may need more sleep or reduced training load</div>`;
-            }
-            
-            if (recoveryTrend >= 0 && hrvTrend >= 0 && avgRecovery >= 67 && strainPercent <= 30) {
-                html += `<div class="insight-item"><strong>Excellent Balance:</strong> You're managing strain and recovery well - keep it up!</div>`;
-            }
-            
-            html += '</div></div>';
-            
             document.getElementById('physio-content').innerHTML = html;
             
-            // Render charts
+            // Render charts after DOM update
             setTimeout(() => {
-                // Render bedtime and wake time bell curves
-                createTimeDistributionChart('physio-bedtime-chart', validData, 'Sleep onset', '#00ff88');
-                createTimeDistributionChart('physio-waketime-chart', validData, 'Wake onset', '#00ddff');
-                
                 chartConfigs.forEach((config, index) => {
                     createLineChart(`physio-chart-${index}`, validData, config);
                 });
             }, 100);
         }
         
-        function calculatePhysioHealthScore(data, avgRecovery, avgHRV, avgRHR, avgStrain) {
-            let score = 5; // Start at baseline
+        function calculateAverage(data, field) {
+            const values = data.map(d => parseFloat(d[field])).filter(v => !isNaN(v));
+            return values.length > 0 ? values.reduce((a, b) => a + b, 0) / values.length : 0;
+        }
+        
+        function generateJournalInsights(data, questionStats) {
+            const positive = [];
+            const alarms = [];
             
-            // Recovery score impact
-            if (avgRecovery >= 75) score += 2;
-            else if (avgRecovery >= 67) score += 1.5;
-            else if (avgRecovery >= 50) score += 0.5;
-            else if (avgRecovery < 40) score -= 1.5;
-            else if (avgRecovery < 50) score -= 0.5;
+            // Find correlations between habits
+            const questions = Object.keys(questionStats);
             
-            // HRV impact (higher is better, but varies by individual)
-            if (avgHRV >= 100) score += 1;
-            else if (avgHRV >= 75) score += 0.5;
-            else if (avgHRV < 40) score -= 1;
-            else if (avgHRV < 60) score -= 0.5;
+            // Group data by date to find correlations
+            const dateMap = {};
+            data.forEach(entry => {
+                const date = entry['Cycle start time'];
+                if (!dateMap[date]) {
+                    dateMap[date] = {};
+                }
+                const question = entry['Question text'];
+                const answered = entry['Answered yes'];
+                dateMap[date][question] = (answered === true || answered === 'TRUE' || answered === 'true');
+            });
             
-            // RHR impact (lower is generally better)
-            if (avgRHR <= 50) score += 1;
-            else if (avgRHR <= 60) score += 0.5;
-            else if (avgRHR >= 75) score -= 1;
-            else if (avgRHR >= 65) score -= 0.5;
+            // Find positive correlations (>70%)
+            for (let i = 0; i < questions.length; i++) {
+                for (let j = i + 1; j < questions.length; j++) {
+                    const q1 = questions[i];
+                    const q2 = questions[j];
+                    
+                    let bothTrue = 0;
+                    let q1True = 0;
+                    
+                    Object.values(dateMap).forEach(day => {
+                        if (day[q1] === true) {
+                            q1True++;
+                            if (day[q2] === true) {
+                                bothTrue++;
+                            }
+                        }
+                    });
+                    
+                    if (q1True > 5) {
+                        const correlation = (bothTrue / q1True) * 100;
+                        
+                        if (correlation > 70) {
+                            positive.push(`<strong>Positive Pattern:</strong> When you ${q1.toLowerCase()}, you also ${q2.toLowerCase()} ${correlation.toFixed(0)}% of the time`);
+                        }
+                    }
+                }
+            }
             
-            // Strain balance
-            if (avgStrain >= 12 && avgStrain <= 18) score += 0.5; // Sweet spot
-            else if (avgStrain > 20) score -= 0.5; // Too much
-            else if (avgStrain < 8) score -= 0.3; // Too little
+            // Find concerning patterns (negative habit correlations)
+            const negativeIndicators = ['gas', 'bloat', 'headache', 'irritable', 'sick', 'poor', 'low energy'];
+            const positiveHabits = ['breakfast', 'exercise', 'gratitude', 'breathwork', 'protein', 'vitamin'];
             
-            // Trend impacts
-            const recoveryTrend = calculateTrend(data, 'Recovery score %');
-            if (recoveryTrend > 5) score += 0.5;
-            else if (recoveryTrend < -5) score -= 0.5;
+            for (let i = 0; i < questions.length; i++) {
+                for (let j = 0; j < questions.length; j++) {
+                    if (i === j) continue;
+                    
+                    const q1 = questions[i];
+                    const q2 = questions[j];
+                    
+                    const hasPositive = positiveHabits.some(h => q1.toLowerCase().includes(h));
+                    const hasNegative = negativeIndicators.some(h => q2.toLowerCase().includes(h));
+                    
+                    if (hasPositive && hasNegative) {
+                        let bothTrue = 0;
+                        let q1True = 0;
+                        
+                        Object.values(dateMap).forEach(day => {
+                            if (day[q1] === true) {
+                                q1True++;
+                                if (day[q2] === true) {
+                                    bothTrue++;
+                                }
+                            }
+                        });
+                        
+                        if (q1True > 5) {
+                            const correlation = (bothTrue / q1True) * 100;
+                            
+                            if (correlation > 50) {
+                                alarms.push(`<strong>Concerning Correlation:</strong> When you ${q1.toLowerCase()}, you ${q2.toLowerCase()} ${correlation.toFixed(0)}% of the time`);
+                            }
+                        }
+                    }
+                }
+            }
             
-            const hrvTrend = calculateTrend(data, 'Heart rate variability (ms)');
-            if (hrvTrend > 10) score += 0.5;
-            else if (hrvTrend < -10) score -= 0.5;
+            // Add default messages if none found
+            if (positive.length === 0) {
+                positive.push('<strong>Tracking Progress:</strong> Continue logging consistently to discover positive habit patterns');
+            }
             
-            // Cap at 1-10
-            return Math.max(1, Math.min(10, Math.round(score * 10) / 10));
+            if (alarms.length === 0) {
+                alarms.push('<strong>No Concerns:</strong> No alarming patterns detected in your data');
+            }
+            
+            return { positive: positive.slice(0, 3), alarms: alarms.slice(0, 3) };
+        }
+        
+        function generatePhysioInsights(data, avgRecovery, avgHRV, avgRHR, avgStrain) {
+            const positive = [];
+            const alarms = [];
+            
+            // Check trends
+            const recoveryTrend = calculateDailyTrend(data, 'Recovery score %');
+            const hrvTrend = calculateDailyTrend(data, 'Heart rate variability (ms)');
+            const rhrTrend = calculateDailyTrend(data, 'Resting heart rate (bpm)');
+            
+            // Positive insights
+            if (recoveryTrend > 0.5) {
+                positive.push(`<strong>Recovery Improving:</strong> Your recovery is trending up ${recoveryTrend.toFixed(2)}% per day`);
+            }
+            if (hrvTrend > 1) {
+                positive.push(`<strong>HRV Increasing:</strong> Heart rate variability up ${hrvTrend.toFixed(1)}ms per day - excellent adaptation`);
+            }
+            if (avgRecovery >= 67) {
+                positive.push(`<strong>Strong Recovery:</strong> ${avgRecovery.toFixed(0)}% average keeps you in the green zone`);
+            }
+            if (rhrTrend < -0.5) {
+                positive.push(`<strong>RHR Improving:</strong> Resting heart rate decreasing ${Math.abs(rhrTrend).toFixed(1)} bpm/day`);
+            }
+            
+            // Alarms
+            if (recoveryTrend < -0.5) {
+                alarms.push(`<strong>Recovery Declining:</strong> Down ${Math.abs(recoveryTrend).toFixed(2)}% per day - consider more rest`);
+            }
+            if (hrvTrend < -1) {
+                alarms.push(`<strong>HRV Decreasing:</strong> Down ${Math.abs(hrvTrend).toFixed(1)}ms per day - possible overtraining`);
+            }
+            if (avgRecovery < 50) {
+                alarms.push(`<strong>Low Recovery:</strong> ${avgRecovery.toFixed(0)}% average suggests inadequate rest`);
+            }
+            if (avgStrain > 18) {
+                alarms.push(`<strong>High Strain:</strong> ${avgStrain.toFixed(1)} average strain may be unsustainable`);
+            }
+            
+            if (positive.length === 0) positive.push('<strong>Steady State:</strong> Metrics are stable - maintain your current routine');
+            if (alarms.length === 0) alarms.push('<strong>No Concerns:</strong> All metrics within healthy ranges');
+            
+            return { positive: positive.slice(0, 3), alarms: alarms.slice(0, 3) };
+        }
+
+        
+        function celsiusToFahrenheit(celsius) {
+            return celsius * 9/5 + 32;
+        }
+        
+        function minToHours(min) {
+            return min / 60;
         }
         
         function calculateDailyTrend(data, field, convertFn) {
@@ -1156,7 +1195,124 @@
             return slope;
         }
         
-        // Workout Dashboard
+        function updateHeaderInfo() {
+            // Get name from localStorage or prompt
+            let userName = localStorage.getItem('userName');
+            if (!userName) {
+                userName = prompt('Enter your name:', 'Your Name') || 'Your Name';
+                localStorage.setItem('userName', userName);
+            }
+            document.getElementById('user-name').textContent = userName;
+            
+            // Calculate date range from all data
+            let allDates = [];
+            
+            if (journalData.length > 0) {
+                allDates.push(...journalData.map(d => new Date(d['Cycle start time'])));
+            }
+            if (physioData.length > 0) {
+                allDates.push(...physioData.map(d => new Date(d['Cycle start time'])));
+            }
+            if (workoutData.length > 0) {
+                allDates.push(...workoutData.map(d => new Date(d['Workout start time'])));
+            }
+            if (sleepData.length > 0) {
+                allDates.push(...sleepData.map(d => new Date(d['Sleep onset'])));
+            }
+            
+            allDates = allDates.filter(d => !isNaN(d.getTime()));
+            
+            if (allDates.length > 0) {
+                const minDate = new Date(Math.min(...allDates));
+                const maxDate = new Date(Math.max(...allDates));
+                const daysDiff = Math.ceil((maxDate - minDate) / (1000 * 60 * 60 * 24)) + 1;
+                
+                document.getElementById('date-range').textContent = 
+                    `${minDate.toLocaleDateString()} - ${maxDate.toLocaleDateString()}`;
+                document.getElementById('days-count').textContent = `${daysDiff} days`;
+            }
+        }
+        
+        function createLineChart(canvasId, data, config) {
+            const ctx = document.getElementById(canvasId);
+            if (!ctx) {
+                console.error('Canvas not found:', canvasId);
+                return;
+            }
+            
+            console.log('Creating chart:', canvasId, 'with', data.length, 'data points');
+            
+            const labels = data.map(d => new Date(d['Cycle start time'] || d['Sleep onset']).toLocaleDateString());
+            let values = data.map(d => parseFloat(d[config.field])).filter(v => !isNaN(v));
+            
+            if (config.convert) {
+                values = values.map(v => config.convert(v));
+            }
+            
+            console.log('Chart data:', { labels: labels.length, values: values.length });
+            
+            if (charts[canvasId]) {
+                charts[canvasId].destroy();
+            }
+            
+            // Check if Chart is available
+            if (typeof Chart === 'undefined') {
+                console.error('Chart.js is not loaded!');
+                return;
+            }
+            
+            try {
+                charts[canvasId] = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: labels.slice(0, values.length),
+                        datasets: [{
+                            label: config.title,
+                            data: values,
+                            borderColor: config.color,
+                            backgroundColor: config.color + '20',
+                            borderWidth: 2,
+                            tension: 0.4,
+                            fill: true,
+                            pointRadius: 3,
+                            pointHoverRadius: 6
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                display: false
+                            }
+                        },
+                        scales: {
+                            x: {
+                                grid: {
+                                    color: 'rgba(255, 255, 255, 0.05)'
+                                },
+                                ticks: {
+                                    color: '#a0a0a0',
+                                    maxTicksLimit: 10
+                                }
+                            },
+                            y: {
+                                grid: {
+                                    color: 'rgba(255, 255, 255, 0.05)'
+                                },
+                                ticks: {
+                                    color: '#a0a0a0'
+                                }
+                            }
+                        }
+                    }
+                });
+                console.log('Chart created successfully:', canvasId);
+            } catch (error) {
+                console.error('Error creating chart:', canvasId, error);
+            }
+        }
+        
         function renderWorkoutDashboard() {
             if (workoutData.length === 0) return;
             
@@ -1172,10 +1328,64 @@
                 activities[activity].push(workout);
             });
             
-            let html = '<div class="activity-section">';
-            
-            Object.keys(activities).sort().forEach(activity => {
+            // Calculate calories per minute for each activity
+            const caloriesPerMin = {};
+            Object.keys(activities).forEach(activity => {
                 const workouts = activities[activity];
+                let totalCalories = 0;
+                let totalMinutes = 0;
+                
+                workouts.forEach(w => {
+                    const cal = parseFloat(w['Energy burned (cal)']) || 0;
+                    const dur = parseFloat(w['Duration (min)']) || 0;
+                    if (cal > 0 && dur > 0) {
+                        totalCalories += cal;
+                        totalMinutes += dur;
+                    }
+                });
+                
+                if (totalMinutes > 0) {
+                    caloriesPerMin[activity] = totalCalories / totalMinutes;
+                }
+            });
+            
+            // Sort by calories per minute
+            const sortedByCalPerMin = Object.entries(caloriesPerMin)
+                .sort((a, b) => a[1] - b[1]); // Low to high
+            
+            let html = '';
+            
+            // Add calories/min bar chart
+            if (sortedByCalPerMin.length > 0) {
+                const maxCalPerMin = Math.max(...sortedByCalPerMin.map(x => x[1]));
+                
+                html += `
+                    <div class="chart-container" style="margin-bottom: 2rem;">
+                        <h3>Calories Per Minute by Activity</h3>
+                        <div style="display: flex; align-items: flex-end; justify-content: space-around; padding: 2rem 1rem; height: 300px; gap: 0.5rem;">
+                `;
+                
+                sortedByCalPerMin.forEach(([activity, calPerMin]) => {
+                    const barHeight = (calPerMin / maxCalPerMin) * 100;
+                    html += `
+                        <div style="flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; height: 100%;">
+                            <div style="font-size: 0.75rem; color: var(--accent-secondary); font-family: 'JetBrains Mono', monospace; margin-bottom: 0.5rem;">${calPerMin.toFixed(1)}</div>
+                            <div style="width: 100%; height: ${barHeight}%; background: var(--accent-secondary); border-radius: 4px 4px 0 0; transition: height 0.5s ease; box-shadow: 0 0 10px rgba(0, 221, 255, 0.4); min-height: 20px;"></div>
+                            <div style="margin-top: 0.5rem; font-size: 0.7rem; color: var(--text-secondary); text-align: center; writing-mode: horizontal-tb; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${activity}</div>
+                        </div>
+                    `;
+                });
+                
+                html += '</div></div>';
+            }
+            
+            html += '<div class="activity-section">';
+            
+            // Sort activities by frequency (most to least)
+            const sortedActivities = Object.entries(activities)
+                .sort((a, b) => b[1].length - a[1].length);
+            
+            sortedActivities.forEach(([activity, workouts]) => {
                 const workoutCount = workouts.length;
                 
                 html += `
@@ -1198,29 +1408,26 @@
                 stats.forEach(stat => {
                     const values = workouts.map(w => parseFloat(w[stat.field])).filter(v => !isNaN(v) && v > 0);
                     if (values.length > 0) {
+                        const min = Math.min(...values).toFixed(1);
                         const avg = (values.reduce((a, b) => a + b, 0) / values.length).toFixed(1);
+                        const max = Math.max(...values).toFixed(1);
                         
                         if (workoutCount === 1) {
-                            // Only show average for single workout
                             html += `
                                 <div class="activity-stat">
                                     <div class="activity-stat-label">${stat.label}</div>
                                     <div class="activity-stat-values">
-                                        <span>${avg}</span>
+                                        <span style="color: var(--accent-primary); font-weight: 700;">${avg}</span>
                                     </div>
                                 </div>
                             `;
                         } else {
-                            // Show min/avg/max for multiple workouts
-                            const min = Math.min(...values).toFixed(1);
-                            const max = Math.max(...values).toFixed(1);
-                            
                             html += `
                                 <div class="activity-stat">
                                     <div class="activity-stat-label">${stat.label}</div>
                                     <div class="activity-stat-values">
                                         <span>Min: ${min}</span>
-                                        <span>Avg: ${avg}</span>
+                                        <span style="color: var(--accent-primary); font-weight: 700;">Avg: ${avg}</span>
                                         <span>Max: ${max}</span>
                                     </div>
                                 </div>
@@ -1234,72 +1441,24 @@
             
             html += '</div>';
             
-            // Insights - split into positives and focus areas
-            html += '<div class="insights-section">';
-            
-            // Positives
-            html += '<div class="insights-column positive"><h3>✓ Positives</h3>';
-            
-            const mostFrequent = Object.entries(activities)
-                .sort((a, b) => b[1].length - a[1].length)[0];
-            html += `<div class="insight-item"><strong>Most Consistent Activity:</strong> ${mostFrequent[0]} with ${mostFrequent[1].length} sessions shows great dedication</div>`;
-            
-            const totalCalories = validData.reduce((sum, w) => sum + (parseFloat(w['Energy burned (cal)']) || 0), 0);
-            const avgCaloriesPerWorkout = (totalCalories / validData.length).toFixed(0);
-            html += `<div class="insight-item"><strong>Total Energy Output:</strong> ${totalCalories.toLocaleString()} calories burned across all workouts</div>`;
-            
-            const varietyCount = Object.keys(activities).length;
-            if (varietyCount >= 3) {
-                html += `<div class="insight-item"><strong>Great Variety:</strong> ${varietyCount} different activities keeps training balanced and engaging</div>`;
-            }
-            
-            html += '</div>';
-            
-            // Focus areas
-            html += '<div class="insights-column focus"><h3>⚡ Focus On</h3>';
-            
-            const allStrains = validData.map(w => parseFloat(w['Activity Strain'])).filter(v => !isNaN(v) && v > 0);
-            const avgStrain = allStrains.length > 0 ? (allStrains.reduce((a, b) => a + b, 0) / allStrains.length).toFixed(2) : 0;
-            
-            if (avgStrain < 8) {
-                html += `<div class="insight-item"><strong>Low Average Strain:</strong> ${avgStrain} suggests workouts could be more intense for greater adaptation</div>`;
-            }
-            
-            const lowFrequencyActivities = Object.entries(activities)
-                .filter(([name, workouts]) => workouts.length === 1)
-                .map(([name]) => name);
-            
-            if (lowFrequencyActivities.length >= 2) {
-                html += `<div class="insight-item"><strong>Sporadic Activities:</strong> ${lowFrequencyActivities.slice(0, 2).join(', ')} - consider making these regular habits</div>`;
-            }
-            
-            if (varietyCount < 3) {
-                html += `<div class="insight-item"><strong>Limited Variety:</strong> Try adding 1-2 new activity types to improve overall fitness</div>`;
-            }
-            
-            const workoutsPerWeek = (validData.length / (validData.length > 0 ? 
-                (new Date(validData[validData.length - 1]['Workout start time']) - new Date(validData[0]['Workout start time'])) / (7 * 24 * 60 * 60 * 1000) : 1)).toFixed(1);
-            
-            if (workoutsPerWeek < 3) {
-                html += `<div class="insight-item"><strong>Workout Frequency:</strong> Currently ${workoutsPerWeek} workouts/week - aim for 3-5 for optimal results</div>`;
-            }
-            
-            html += '</div></div>';
-            
             document.getElementById('workout-content').innerHTML = html;
         }
         
-        // Sleep Dashboard
         function renderSleepDashboard() {
             if (sleepData.length === 0) return;
             
             const validData = sleepData.filter(d => d['Sleep onset'] && d['Sleep onset'].trim());
             
-            // Calculate averages
-            const avgPerformance = calculateAverage(validData, 'Sleep performance %');
-            const avgDuration = calculateAverage(validData, 'Asleep duration (min)');
-            const avgEfficiency = calculateAverage(validData, 'Sleep efficiency %');
-            const avgDebt = calculateAverage(validData, 'Sleep debt (min)');
+            // Filter out naps for calculations and charts
+            const nonNapData = validData.filter(d => 
+                d['Nap'] !== 'TRUE' && d['Nap'] !== true && d['Nap'] !== 'true' && d['Nap'] !== '1'
+            );
+            
+            // Calculate averages (excluding naps)
+            const avgPerformance = calculateAverage(nonNapData, 'Sleep performance %');
+            const avgDuration = calculateAverage(nonNapData, 'Asleep duration (min)');
+            const avgEfficiency = calculateAverage(nonNapData, 'Sleep efficiency %');
+            const avgDebt = calculateAverage(nonNapData, 'Sleep debt (min)');
             
             let html = `
                 <div class="dashboard-grid">
@@ -1326,23 +1485,7 @@
                 </div>
             `;
             
-            // Bell curves for sleep/wake times
-            html += `
-                <div class="chart-container">
-                    <h3>Sleep Time Distribution</h3>
-                    <div class="chart-wrapper">
-                        <canvas id="sleep-time-chart"></canvas>
-                    </div>
-                </div>
-                <div class="chart-container">
-                    <h3>Wake Time Distribution</h3>
-                    <div class="chart-wrapper">
-                        <canvas id="wake-time-chart"></canvas>
-                    </div>
-                </div>
-            `;
-            
-            // Other metrics
+            // Add charts
             const chartConfigs = [
                 { title: 'Sleep Performance', field: 'Sleep performance %', color: '#00ff88' },
                 { title: 'Respiratory Rate', field: 'Respiratory rate (rpm)', color: '#00ddff' },
@@ -1357,9 +1500,17 @@
             ];
             
             chartConfigs.forEach((config, index) => {
+                const trendPerDay = calculateDailyTrend(validData, config.field, config.convert);
+                const trendDirection = trendPerDay > 0 ? '↑' : trendPerDay < 0 ? '↓' : '→';
+                const trendColor = trendPerDay > 0 ? '#00ff88' : trendPerDay < 0 ? '#ff3366' : '#a0a0a0';
+                
                 html += `
                     <div class="chart-container">
-                        <h3>${config.title}</h3>
+                        <h3>${config.title} 
+                            <span style="color: ${trendColor}; font-size: 0.9rem; margin-left: 1rem;">
+                                ${trendDirection} ${Math.abs(trendPerDay).toFixed(2)}/day
+                            </span>
+                        </h3>
                         <div class="chart-wrapper">
                             <canvas id="sleep-chart-${index}"></canvas>
                         </div>
@@ -1367,270 +1518,14 @@
                 `;
             });
             
-            // Insights - split into positives and focus areas
-            html += '<div class="insights-section">';
-            
-            // Positives
-            html += '<div class="insights-column positive"><h3>✓ Positives</h3>';
-            
-            if (avgPerformance >= 85) {
-                html += `<div class="insight-item"><strong>Excellent Sleep Quality:</strong> ${avgPerformance.toFixed(0)}% average performance is outstanding</div>`;
-            } else if (avgPerformance >= 70) {
-                html += `<div class="insight-item"><strong>Good Sleep Quality:</strong> ${avgPerformance.toFixed(0)}% average performance shows solid recovery</div>`;
-            }
-            
-            if (avgEfficiency >= 90) {
-                html += `<div class="insight-item"><strong>High Efficiency:</strong> ${avgEfficiency.toFixed(0)}% means you're spending most of your time in bed actually sleeping</div>`;
-            }
-            
-            const avgSleepTime = getAverageTime(validData, 'Sleep onset');
-            const avgWakeTime = getAverageTime(validData, 'Wake onset');
-            html += `<div class="insight-item"><strong>Consistent Schedule:</strong> Average sleep at ${avgSleepTime}, wake at ${avgWakeTime}</div>`;
-            
-            const bestNight = validData.reduce((best, current) => {
-                const currentPerf = parseFloat(current['Sleep performance %']) || 0;
-                const bestPerf = parseFloat(best['Sleep performance %']) || 0;
-                return currentPerf > bestPerf ? current : best;
-            });
-            const bestDate = new Date(bestNight['Sleep onset']).toLocaleDateString();
-            html += `<div class="insight-item"><strong>Best Sleep:</strong> ${bestNight['Sleep performance %']}% on ${bestDate}</div>`;
-            
-            html += '</div>';
-            
-            // Focus areas
-            html += '<div class="insights-column focus"><h3>⚡ Focus On</h3>';
-            
-            if (avgDebt > 60) {
-                html += `<div class="insight-item"><strong>High Sleep Debt:</strong> Average ${avgDebt.toFixed(0)} minutes (${(avgDebt / 60).toFixed(1)} hours) - prioritize getting to bed earlier</div>`;
-            } else if (avgDebt > 30) {
-                html += `<div class="insight-item"><strong>Moderate Sleep Debt:</strong> ${avgDebt.toFixed(0)} minutes - try adding 30-60 min to your sleep window</div>`;
-            }
-            
-            if (avgPerformance < 70) {
-                html += `<div class="insight-item"><strong>Sleep Performance:</strong> ${avgPerformance.toFixed(0)}% average suggests room for improvement in sleep quality</div>`;
-            }
-            
-            const naps = validData.filter(d => d['Nap'] === 'TRUE' || d['Nap'] === true);
-            const napCount = naps.length;
-            
-            if (napCount > 0) {
-                const napDeepSleep = naps.map(d => parseFloat(d['Deep (SWS) duration (min)'])).filter(v => !isNaN(v));
-                const nonNapDeepSleep = validData.filter(d => d['Nap'] !== 'TRUE' && d['Nap'] !== true)
-                    .map(d => parseFloat(d['Deep (SWS) duration (min)'])).filter(v => !isNaN(v));
-                
-                if (napDeepSleep.length > 0 && nonNapDeepSleep.length > 0) {
-                    const avgNapDeep = napDeepSleep.reduce((a, b) => a + b, 0) / napDeepSleep.length;
-                    const avgNonNapDeep = nonNapDeepSleep.reduce((a, b) => a + b, 0) / nonNapDeepSleep.length;
-                    const difference = ((avgNapDeep - avgNonNapDeep) / avgNonNapDeep * 100).toFixed(0);
-                    
-                    if (avgNapDeep < avgNonNapDeep) {
-                        html += `<div class="insight-item"><strong>Nap Impact:</strong> Days with naps show ${Math.abs(difference)}% less deep sleep (${avgNapDeep.toFixed(0)}min vs ${avgNonNapDeep.toFixed(0)}min) - consider timing naps earlier</div>`;
-                    }
-                }
-            }
-            
-            const avgAwakeDuration = calculateAverage(validData, 'Awake duration (min)');
-            if (avgAwakeDuration > 45) {
-                html += `<div class="insight-item"><strong>Wake Time:</strong> Average ${avgAwakeDuration.toFixed(0)} minutes awake - work on sleep hygiene to reduce disruptions</div>`;
-            }
-            
-            if (avgEfficiency < 85) {
-                html += `<div class="insight-item"><strong>Sleep Efficiency:</strong> ${avgEfficiency.toFixed(0)}% suggests spending too much time awake in bed - adjust bedtime routine</div>`;
-            }
-            
-            html += '</div></div>';
-            
             document.getElementById('sleep-content').innerHTML = html;
             
-            // Render charts
+            // Render charts after DOM update
             setTimeout(() => {
-                createTimeDistributionChart('sleep-time-chart', validData, 'Sleep onset', '#00ff88');
-                createTimeDistributionChart('wake-time-chart', validData, 'Wake onset', '#00ddff');
-                
                 chartConfigs.forEach((config, index) => {
-                    createLineChart(`sleep-chart-${index}`, validData, config);
+                    createLineChart(`sleep-chart-${index}`, nonNapData, config);
                 });
             }, 100);
-        }
-        
-        // Helper functions
-        function calculateAverage(data, field) {
-            const values = data.map(d => parseFloat(d[field])).filter(v => !isNaN(v));
-            return values.length > 0 ? values.reduce((a, b) => a + b, 0) / values.length : 0;
-        }
-        
-        function calculateTrend(data, field) {
-            const recent = data.slice(-7);
-            const earlier = data.slice(0, 7);
-            const recentAvg = calculateAverage(recent, field);
-            const earlierAvg = calculateAverage(earlier, field);
-            return recentAvg - earlierAvg;
-        }
-        
-        function celsiusToFahrenheit(celsius) {
-            return celsius * 9/5 + 32;
-        }
-        
-        function minToHours(min) {
-            return min / 60;
-        }
-        
-        function getAverageTime(data, field) {
-            const times = data.map(d => {
-                const date = new Date(d[field]);
-                return date.getHours() * 60 + date.getMinutes();
-            }).filter(v => !isNaN(v));
-            
-            const avgMinutes = times.reduce((a, b) => a + b, 0) / times.length;
-            const hours = Math.floor(avgMinutes / 60) % 24;
-            const mins = Math.floor(avgMinutes % 60);
-            return formatTime12Hour(hours, mins);
-        }
-        
-        function formatTime12Hour(hours, minutes) {
-            const period = hours >= 12 ? 'PM' : 'AM';
-            const hour12 = hours % 12 || 12;
-            return `${hour12}:${minutes.toString().padStart(2, '0')} ${period}`;
-        }
-        
-        function formatDateTime12Hour(dateStr) {
-            const date = new Date(dateStr);
-            return formatTime12Hour(date.getHours(), date.getMinutes());
-        }
-        
-        function createLineChart(canvasId, data, config) {
-            const ctx = document.getElementById(canvasId);
-            if (!ctx) return;
-            
-            const labels = data.map(d => new Date(d['Cycle start time'] || d['Sleep onset']).toLocaleDateString());
-            let values = data.map(d => parseFloat(d[config.field])).filter(v => !isNaN(v));
-            
-            if (config.convert) {
-                values = values.map(v => config.convert(v));
-            }
-            
-            if (charts[canvasId]) {
-                charts[canvasId].destroy();
-            }
-            
-            charts[canvasId] = new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels: labels.slice(0, values.length),
-                    datasets: [{
-                        label: config.title,
-                        data: values,
-                        borderColor: config.color,
-                        backgroundColor: config.color + '20',
-                        borderWidth: 2,
-                        tension: 0.4,
-                        fill: true,
-                        pointRadius: 3,
-                        pointHoverRadius: 6
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                            display: false
-                        }
-                    },
-                    scales: {
-                        x: {
-                            grid: {
-                                color: 'rgba(255, 255, 255, 0.05)'
-                            },
-                            ticks: {
-                                color: '#a0a0a0',
-                                maxTicksLimit: 10
-                            }
-                        },
-                        y: {
-                            grid: {
-                                color: 'rgba(255, 255, 255, 0.05)'
-                            },
-                            ticks: {
-                                color: '#a0a0a0'
-                            }
-                        }
-                    }
-                }
-            });
-        }
-        
-        function createTimeDistributionChart(canvasId, data, field, color) {
-            const ctx = document.getElementById(canvasId);
-            if (!ctx) return;
-            
-            // Convert times to hours (0-24)
-            const hours = data.map(d => {
-                const date = new Date(d[field]);
-                return date.getHours() + date.getMinutes() / 60;
-            }).filter(v => !isNaN(v));
-            
-            // Create histogram
-            const bins = 24;
-            const counts = new Array(bins).fill(0);
-            hours.forEach(hour => {
-                const bin = Math.floor(hour);
-                counts[bin]++;
-            });
-            
-            // Create 12-hour labels
-            const labels = Array.from({length: bins}, (_, i) => {
-                const period = i >= 12 ? 'PM' : 'AM';
-                const hour12 = i % 12 || 12;
-                return `${hour12}${period}`;
-            });
-            
-            if (charts[canvasId]) {
-                charts[canvasId].destroy();
-            }
-            
-            charts[canvasId] = new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: labels,
-                    datasets: [{
-                        label: 'Frequency',
-                        data: counts,
-                        backgroundColor: color + '60',
-                        borderColor: color,
-                        borderWidth: 2
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                            display: false
-                        }
-                    },
-                    scales: {
-                        x: {
-                            grid: {
-                                color: 'rgba(255, 255, 255, 0.05)'
-                            },
-                            ticks: {
-                                color: '#a0a0a0',
-                                maxTicksLimit: 12
-                            }
-                        },
-                        y: {
-                            grid: {
-                                color: 'rgba(255, 255, 255, 0.05)'
-                            },
-                            ticks: {
-                                color: '#a0a0a0',
-                                stepSize: 1
-                            }
-                        }
-                    }
-                }
-            });
         }
         
         // Initialize with saved data
@@ -1639,6 +1534,8 @@
             physioData = loadFromLocalStorage('physioData');
             workoutData = loadFromLocalStorage('workoutData');
             sleepData = loadFromLocalStorage('sleepData');
+            
+            updateHeaderInfo();
             
             if (journalData.length > 0) renderJournalDashboard();
             if (physioData.length > 0) renderPhysioDashboard();
