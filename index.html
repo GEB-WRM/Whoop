@@ -76,12 +76,83 @@
         .header-right {
             text-align: right;
             font-family: 'JetBrains Mono', monospace;
-            font-size: 0.75rem;
+            font-size: 0.85rem;
             color: var(--text-secondary);
         }
         
         .header-right div {
-            margin: 0.2rem 0;
+            margin: 0.3rem 0;
+        }
+        
+        .header-goals {
+            text-align: center;
+            font-family: 'JetBrains Mono', monospace;
+            padding: 1rem 2rem;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 8px;
+        }
+        
+        .header-goals h3 {
+            font-size: 0.85rem;
+            color: var(--accent-secondary);
+            margin-bottom: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+        }
+        
+        .goals-input-group {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 0.5rem;
+        }
+        
+        .goals-input-group label {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+        
+        .goals-input-group input {
+            background: rgba(0, 0, 0, 0.5);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            padding: 0.4rem 0.6rem;
+            color: var(--text-primary);
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.85rem;
+            width: 120px;
+        }
+        
+        .goals-input-group input:focus {
+            outline: none;
+            border-color: var(--accent-secondary);
+        }
+        
+        .goals-input-group button {
+            background: var(--accent-secondary);
+            border: none;
+            border-radius: 4px;
+            padding: 0.5rem 1rem;
+            color: var(--bg-primary);
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8rem;
+            font-weight: 700;
+            cursor: pointer;
+            text-transform: uppercase;
+            transition: all 0.3s ease;
+        }
+        
+        .goals-input-group button:hover {
+            background: var(--accent-primary);
+            box-shadow: 0 0 10px rgba(0, 221, 255, 0.5);
+        }
+        
+        .goal-result {
+            font-size: 1.4rem;
+            color: var(--accent-primary);
+            font-weight: 700;
+            margin-top: 0.5rem;
         }
         
         /* Tabs */
@@ -609,6 +680,10 @@
             <h1>WHOOP ANALYTICS</h1>
             <p>Advanced Performance Tracking & Insights</p>
         </div>
+        <div class="header-goals">
+            <h3>Goals</h3>
+            <div id="goals-display"></div>
+        </div>
         <div class="header-right">
             <div id="user-name">Your Name</div>
             <div id="date-range">Loading...</div>
@@ -782,6 +857,7 @@
                         
                         renderPhysioDashboard();
                         updateHeaderInfo();
+                        renderGoals();
                         document.getElementById('physio-status').textContent = `✓ Imported ${results.data.length} cycles (${physioData.length} total)`;
                         document.getElementById('physio-status').className = 'import-status success';
                     } catch (error) {
@@ -873,7 +949,7 @@
             let html = `
                 <div class="insights-section" style="margin-bottom: 2rem;">
                     <div class="insights-column positive">
-                        <h3>✓ Positive Insights</h3>
+                        <h3>🔗 Interesting Correlations</h3>
                         ${insights.positive.map(insight => `<div class="insight-item">${insight}</div>`).join('')}
                     </div>
                     <div class="insights-column focus" style="border-left-color: var(--accent-danger);">
@@ -951,8 +1027,7 @@
                         ${physioInsights.alarms.map(alarm => `<div class="insight-item">${alarm}</div>`).join('')}
                     </div>
                 </div>
-                <div class="dashboard-grid">
-                <div class="dashboard-grid">
+                <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 1.5rem; margin-bottom: 2rem;">
                     <div class="metric-card">
                         <h3>Avg Recovery</h3>
                         <div class="metric-value">${avgRecovery.toFixed(0)}%</div>
@@ -995,13 +1070,13 @@
                 const trendColor = trendPerDay > 0 ? '#00ff88' : trendPerDay < 0 ? '#ff3366' : '#a0a0a0';
                 
                 html += `
-                    <div class="chart-container">
+                    <div class="chart-container" style="width: 100%; max-width: none;">
                         <h3>${config.title} 
                             <span style="color: ${trendColor}; font-size: 0.9rem; margin-left: 1rem;">
                                 ${trendDirection} ${Math.abs(trendPerDay).toFixed(2)}/day
                             </span>
                         </h3>
-                        <div class="chart-wrapper">
+                        <div class="chart-wrapper" style="height: 300px;">
                             <canvas id="physio-chart-${index}"></canvas>
                         </div>
                     </div>
@@ -1117,7 +1192,9 @@
                 alarms.push('<strong>No Concerns:</strong> No alarming patterns detected in your data');
             }
             
-            return { positive: positive.slice(0, 3), alarms: alarms.slice(0, 3) };
+            // Randomize and pick one correlation
+            const randomPositive = positive.length > 0 ? [positive[Math.floor(Math.random() * positive.length)]] : ['<strong>Keep Tracking:</strong> More data needed to find interesting correlations'];
+            return { positive: randomPositive, alarms: alarms.slice(0, 3) };
         }
         
         function generatePhysioInsights(data, avgRecovery, avgHRV, avgRHR, avgStrain) {
@@ -1196,40 +1273,147 @@
         }
         
         function updateHeaderInfo() {
-            // Get name from localStorage or prompt
-            let userName = localStorage.getItem('userName');
-            if (!userName) {
-                userName = prompt('Enter your name:', 'Your Name') || 'Your Name';
-                localStorage.setItem('userName', userName);
-            }
+            // Prompt for name every time
+            const userName = prompt('Enter your name:', 'Your Name') || 'Your Name';
             document.getElementById('user-name').textContent = userName;
             
             // Calculate date range from all data
             let allDates = [];
             
             if (journalData.length > 0) {
-                allDates.push(...journalData.map(d => new Date(d['Cycle start time'])));
+                journalData.forEach(d => {
+                    const date = new Date(d['Cycle start time']);
+                    if (!isNaN(date.getTime()) && date.getFullYear() > 2000) {
+                        allDates.push(date);
+                    }
+                });
             }
             if (physioData.length > 0) {
-                allDates.push(...physioData.map(d => new Date(d['Cycle start time'])));
+                physioData.forEach(d => {
+                    const date = new Date(d['Cycle start time']);
+                    if (!isNaN(date.getTime()) && date.getFullYear() > 2000) {
+                        allDates.push(date);
+                    }
+                });
             }
             if (workoutData.length > 0) {
-                allDates.push(...workoutData.map(d => new Date(d['Workout start time'])));
+                workoutData.forEach(d => {
+                    const date = new Date(d['Workout start time']);
+                    if (!isNaN(date.getTime()) && date.getFullYear() > 2000) {
+                        allDates.push(date);
+                    }
+                });
             }
             if (sleepData.length > 0) {
-                allDates.push(...sleepData.map(d => new Date(d['Sleep onset'])));
+                sleepData.forEach(d => {
+                    const date = new Date(d['Sleep onset']);
+                    if (!isNaN(date.getTime()) && date.getFullYear() > 2000) {
+                        allDates.push(date);
+                    }
+                });
             }
             
-            allDates = allDates.filter(d => !isNaN(d.getTime()));
-            
             if (allDates.length > 0) {
-                const minDate = new Date(Math.min(...allDates));
-                const maxDate = new Date(Math.max(...allDates));
+                // Sort dates to ensure we get true min and max
+                allDates.sort((a, b) => a - b);
+                const minDate = allDates[0];
+                const maxDate = allDates[allDates.length - 1];
                 const daysDiff = Math.ceil((maxDate - minDate) / (1000 * 60 * 60 * 24)) + 1;
                 
                 document.getElementById('date-range').textContent = 
                     `${minDate.toLocaleDateString()} - ${maxDate.toLocaleDateString()}`;
-                document.getElementById('days-count').textContent = `${daysDiff} days`;
+                document.getElementById('days-count').innerHTML = `<strong>${daysDiff} days</strong>`;
+            } else {
+                document.getElementById('date-range').textContent = 'No valid dates found';
+                document.getElementById('days-count').textContent = '';
+            }
+        }
+        
+        function renderGoals() {
+            const goals = loadGoals();
+            const currentHRV = physioData.length > 0 ? calculateAverage(physioData, 'Heart rate variability (ms)') : 0;
+            
+            if (goals.targetHRV && goals.targetDate) {
+                // Calculate daily change needed
+                const today = new Date();
+                const targetDate = new Date(goals.targetDate);
+                const daysRemaining = Math.ceil((targetDate - today) / (1000 * 60 * 60 * 24));
+                const hrvDifference = goals.targetHRV - currentHRV;
+                const dailyChangeNeeded = daysRemaining > 0 ? hrvDifference / daysRemaining : 0;
+                
+                // Format date as mm/dd/yyyy
+                const formattedDate = `${(targetDate.getMonth() + 1).toString().padStart(2, '0')}/${targetDate.getDate().toString().padStart(2, '0')}/${targetDate.getFullYear()}`;
+                
+                document.getElementById('goals-display').innerHTML = `
+                    <div style="font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 0.5rem;">
+                        Current Avg HRV: ${currentHRV.toFixed(0)}ms
+                    </div>
+                    <div class="goal-result">
+                        Daily Change Needed: ${dailyChangeNeeded > 0 ? '+' : ''}${dailyChangeNeeded.toFixed(2)} ms/day to reach ${goals.targetHRV}ms by ${formattedDate}
+                    </div>
+                    <button onclick="clearGoals()" style="margin-top: 0.5rem; background: rgba(255, 51, 102, 0.2); color: var(--accent-danger); border: 1px solid var(--accent-danger); padding: 0.3rem 0.6rem; border-radius: 4px; cursor: pointer; font-size: 0.65rem;">Clear Goals</button>
+                `;
+            } else {
+                // Show input form
+                document.getElementById('goals-display').innerHTML = `
+                    <div class="goals-input-group">
+                        <label>Target Avg HRV:</label>
+                        <input type="number" id="target-hrv" placeholder="e.g., 80">
+                        <label>Target Date (mm/dd/yyyy):</label>
+                        <input type="text" id="target-date" placeholder="03/15/2026" pattern="\\d{2}/\\d{2}/\\d{4}">
+                        <button onclick="saveGoals()">Set Goal</button>
+                    </div>
+                `;
+            }
+        }
+        
+        function loadGoals() {
+            try {
+                const saved = localStorage.getItem('whoopGoals');
+                return saved ? JSON.parse(saved) : {};
+            } catch (e) {
+                return {};
+            }
+        }
+        
+        function saveGoals() {
+            const targetHRV = parseFloat(document.getElementById('target-hrv').value);
+            const targetDateInput = document.getElementById('target-date').value;
+            
+            if (!targetHRV || !targetDateInput) {
+                alert('Please enter both target HRV and target date');
+                return;
+            }
+            
+            // Parse mm/dd/yyyy format
+            const datePattern = /^(\d{2})\/(\d{2})\/(\d{4})$/;
+            const match = targetDateInput.match(datePattern);
+            
+            if (!match) {
+                alert('Please enter date in mm/dd/yyyy format (e.g., 03/15/2026)');
+                return;
+            }
+            
+            const month = match[1];
+            const day = match[2];
+            const year = match[3];
+            
+            // Create ISO date string for storage (yyyy-mm-dd)
+            const isoDate = `${year}-${month}-${day}`;
+            
+            const goals = {
+                targetHRV: targetHRV,
+                targetDate: isoDate
+            };
+            
+            localStorage.setItem('whoopGoals', JSON.stringify(goals));
+            renderGoals();
+        }
+        
+        function clearGoals() {
+            if (confirm('Are you sure you want to clear your goals?')) {
+                localStorage.removeItem('whoopGoals');
+                renderGoals();
             }
         }
         
@@ -1536,6 +1720,7 @@
             sleepData = loadFromLocalStorage('sleepData');
             
             updateHeaderInfo();
+            renderGoals();
             
             if (journalData.length > 0) renderJournalDashboard();
             if (physioData.length > 0) renderPhysioDashboard();
