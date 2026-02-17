@@ -4,51 +4,45 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Whoop Analytics Dashboard</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+    <title>WHOOP Analytics Dashboard</title>
+    
+    <!-- External Libraries -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/chartjs-plugin-annotation/2.1.0/chartjs-plugin-annotation.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Archivo:wght@300;400;600;700;900&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
+    
     <style>
-        :root {
-            --bg-primary: #0a0e14;
-            --bg-secondary: #0f1419;
-            --bg-tertiary: #151a21;
-            --accent-primary: #00ff88;
-            --accent-secondary: #00ddff;
-            --accent-warning: #ffaa00;
-            --accent-danger: #ff3366;
-            --text-primary: #e6e6e6;
-            --text-secondary: #a0a0a0;
-            --text-dim: #606060;
-            --border-color: #1a2028;
-            --shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
-        }
-        
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
         }
         
-        body {
-            font-family: 'Archivo', sans-serif;
-            background: linear-gradient(135deg, var(--bg-primary) 0%, var(--bg-secondary) 100%);
-            color: var(--text-primary);
-            min-height: 100vh;
-            padding: 0;
-            overflow-x: hidden;
+        :root {
+            --bg-primary: #0a0e1a;
+            --bg-secondary: #111827;
+            --bg-tertiary: #1a2332;
+            --text-primary: #ffffff;
+            --text-secondary: #a0a0a0;
+            --text-dim: #6b7280;
+            --accent-primary: #00ff88;
+            --accent-secondary: #00ddff;
+            --accent-danger: #ff3366;
+            --border-color: #2d3748;
+            --shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
         }
         
-        /* Header */
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.6;
+        }
+        
         .header {
-            background: rgba(15, 20, 25, 0.95);
-            backdrop-filter: blur(10px);
-            border-bottom: 1px solid var(--border-color);
+            background: var(--bg-secondary);
             padding: 1.5rem 2rem;
-            position: sticky;
-            top: 0;
-            z-index: 100;
             box-shadow: var(--shadow);
             display: flex;
             justify-content: space-between;
@@ -56,48 +50,173 @@
         }
         
         .header-left h1 {
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 1.8rem;
-            font-weight: 900;
-            letter-spacing: -0.02em;
-            background: linear-gradient(135deg, var(--accent-primary) 0%, var(--accent-secondary) 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--accent-secondary);
+            letter-spacing: 0.05em;
         }
         
         .header-left p {
+            font-size: 0.75rem;
             color: var(--text-secondary);
-            font-size: 0.9rem;
-            margin-top: 0.3rem;
-            font-weight: 300;
+            margin-top: 0.25rem;
+        }
+        
+        .upload-zone {
+            background: rgba(0, 221, 255, 0.05);
+            border: 2px dashed var(--accent-secondary);
+            border-radius: 8px;
+            padding: 0.8rem 1.5rem;
+            color: var(--text-secondary);
+            font-size: 0.75rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+            min-width: 200px;
+        }
+        
+        .upload-zone:hover {
+            background: rgba(0, 221, 255, 0.1);
+            border-color: var(--accent-primary);
+            box-shadow: 0 0 15px rgba(0, 221, 255, 0.3);
+        }
+        
+        .upload-zone.drag-over {
+            background: rgba(0, 221, 255, 0.2);
+            border-color: var(--accent-primary);
+            transform: scale(1.02);
+        }
+        
+        .upload-zone-title {
+            font-weight: 700;
+            color: var(--accent-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            margin-bottom: 0.3rem;
+        }
+        
+        .upload-zone-hint {
+            font-size: 0.65rem;
+            color: var(--text-dim);
         }
         
         .header-right {
             text-align: right;
-            font-family: 'JetBrains Mono', monospace;
             font-size: 0.85rem;
             color: var(--text-secondary);
         }
         
-        .header-right div {
-            margin: 0.3rem 0;
-        }
-        
-        .header-goals {
-            text-align: center;
-            font-family: 'JetBrains Mono', monospace;
+        .tabs {
+            background: var(--bg-secondary);
+            display: flex;
+            gap: 0.5rem;
             padding: 1rem 2rem;
-            background: rgba(0, 0, 0, 0.3);
-            border-radius: 8px;
+            border-bottom: 1px solid var(--border-color);
         }
         
-        .header-goals h3 {
-            font-size: 0.85rem;
+        .tab {
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            padding: 0.75rem 1.5rem;
+            cursor: pointer;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        
+        .tab:hover {
+            background: rgba(0, 221, 255, 0.1);
             color: var(--accent-secondary);
-            margin-bottom: 0.8rem;
-            text-transform: uppercase;
-            letter-spacing: 0.1em;
+        }
+        
+        .tab.active {
+            background: var(--accent-secondary);
+            color: var(--bg-primary);
+        }
+        
+        .content {
+            padding: 2rem;
+            max-width: 1800px;
+            margin: 0 auto;
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        .chart-container {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: var(--shadow);
+        }
+        
+        .chart-wrapper {
+            position: relative;
+            height: 400px;
+        }
+        
+        .metric-card {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1.5rem;
+            text-align: center;
+            box-shadow: var(--shadow);
+        }
+        
+        .metric-card h3 {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            margin-bottom: 0.5rem;
+        }
+        
+        .metric-value {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--accent-primary);
+            margin: 0.5rem 0;
+        }
+        
+        .metric-label {
+            font-size: 0.75rem;
+            color: var(--text-dim);
+        }
+        
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        
+        .goals-section {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1.5rem 2rem;
+            margin-bottom: 2rem;
+            text-align: center;
+            display: flex;
+            align-items: center;
+            gap: 2rem;
+        }
+        
+        .goals-section h3 {
+            margin: 0 !important;
+            white-space: nowrap;
+        }
+        
+        .goals-content {
+            flex: 1;
         }
         
         .goals-input-group {
@@ -119,14 +238,8 @@
             border-radius: 4px;
             padding: 0.4rem 0.6rem;
             color: var(--text-primary);
-            font-family: 'JetBrains Mono', monospace;
             font-size: 0.85rem;
             width: 120px;
-        }
-        
-        .goals-input-group input:focus {
-            outline: none;
-            border-color: var(--accent-secondary);
         }
         
         .goals-input-group button {
@@ -135,7 +248,6 @@
             border-radius: 4px;
             padding: 0.5rem 1rem;
             color: var(--bg-primary);
-            font-family: 'JetBrains Mono', monospace;
             font-size: 0.8rem;
             font-weight: 700;
             cursor: pointer;
@@ -155,522 +267,78 @@
             margin-top: 0.5rem;
         }
         
-        /* Tabs */
-        .tabs {
-            display: flex;
-            gap: 0;
-            background: var(--bg-tertiary);
-            border-bottom: 2px solid var(--border-color);
-            padding: 0 2rem;
-            overflow-x: auto;
-        }
-        
-        .tab {
-            font-family: 'JetBrains Mono', monospace;
-            background: none;
-            border: none;
-            color: var(--text-secondary);
-            padding: 1.2rem 2rem;
-            cursor: pointer;
-            font-size: 0.85rem;
-            font-weight: 600;
-            letter-spacing: 0.05em;
-            text-transform: uppercase;
-            transition: all 0.3s ease;
-            border-bottom: 3px solid transparent;
-            position: relative;
-        }
-        
-        .tab:hover {
-            color: var(--text-primary);
-            background: rgba(0, 255, 136, 0.05);
-        }
-        
-        .tab.active {
-            color: var(--accent-primary);
-            border-bottom-color: var(--accent-primary);
-        }
-        
-        /* Content */
-        .content {
-            padding: 2rem;
-            max-width: 1800px;
-            margin: 0 auto;
-        }
-        
-        .tab-content {
-            display: none;
-            animation: fadeIn 0.5s ease;
-        }
-        
-        .tab-content.active {
-            display: block;
-        }
-        
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-        
-        /* Import Section */
-        .import-section {
-            background: rgba(21, 26, 33, 0.3);
+        .view-toggle-btn {
+            background: rgba(0, 0, 0, 0.3);
             border: 1px solid var(--border-color);
-            border-radius: 6px;
-            padding: 0.8rem 1.2rem;
-            margin-bottom: 1.5rem;
-            transition: all 0.3s ease;
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-        }
-        
-        .import-section:hover {
-            background: rgba(21, 26, 33, 0.5);
-        }
-        
-        .import-section h3 {
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 0.75rem;
-            margin: 0;
-            color: var(--text-dim);
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-            flex-shrink: 0;
-        }
-        
-        .file-input-wrapper {
-            position: relative;
-            display: inline-block;
-        }
-        
-        .file-input {
-            display: none;
-        }
-        
-        .file-label {
-            display: inline-block;
-            padding: 0.4rem 0.8rem;
-            background: rgba(0, 255, 136, 0.1);
-            color: var(--text-secondary);
-            font-family: 'JetBrains Mono', monospace;
-            font-weight: 600;
-            font-size: 0.7rem;
             border-radius: 4px;
+            padding: 0.4rem 0.8rem;
+            color: var(--text-secondary);
+            font-size: 0.75rem;
             cursor: pointer;
             transition: all 0.3s ease;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-            border: 1px solid rgba(0, 255, 136, 0.2);
-        }
-        
-        .file-label:hover {
-            background: rgba(0, 255, 136, 0.2);
-            color: var(--accent-primary);
-            border-color: var(--accent-primary);
-        }
-        
-        .import-status {
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 0.7rem;
-            color: var(--text-dim);
-            flex-grow: 1;
-        }
-        
-        .import-status.success {
-            color: var(--accent-primary);
-        }
-        
-        .import-status.error {
-            color: var(--accent-danger);
-        }
-        
-        /* Dashboard Grid */
-        .dashboard-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
-            gap: 1.5rem;
-            margin-bottom: 2rem;
-        }
-        
-        .metric-card {
-            background: linear-gradient(135deg, var(--bg-tertiary) 0%, rgba(21, 26, 33, 0.8) 100%);
-            border: 1px solid var(--border-color);
-            border-radius: 12px;
-            padding: 1.5rem;
-            box-shadow: var(--shadow);
-            transition: all 0.3s ease;
-        }
-        
-        .metric-card:hover {
-            border-color: var(--accent-primary);
-            transform: translateY(-4px);
-            box-shadow: 0 8px 30px rgba(0, 255, 136, 0.15);
-        }
-        
-        .metric-card h3 {
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 0.85rem;
-            text-transform: uppercase;
-            letter-spacing: 0.1em;
-            color: var(--text-secondary);
-            margin-bottom: 0.8rem;
-        }
-        
-        .metric-value {
-            font-size: 2.5rem;
-            font-weight: 900;
-            background: linear-gradient(135deg, var(--accent-primary) 0%, var(--accent-secondary) 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-            margin-bottom: 0.5rem;
-        }
-        
-        .metric-label {
-            color: var(--text-dim);
-            font-size: 0.85rem;
-            font-weight: 300;
-        }
-        
-        /* Charts */
-        .chart-container {
-            background: var(--bg-tertiary);
-            border: 1px solid var(--border-color);
-            border-radius: 12px;
-            padding: 2rem;
-            margin-bottom: 2rem;
-            box-shadow: var(--shadow);
-        }
-        
-        .chart-container h3 {
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 1rem;
-            margin-bottom: 1.5rem;
-            color: var(--accent-secondary);
-            text-transform: uppercase;
-            letter-spacing: 0.1em;
-        }
-        
-        .chart-wrapper {
-            position: relative;
-            height: 400px;
-        }
-        
-        /* Insights Section */
-        .insights-section {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
-            gap: 1.5rem;
-            margin-bottom: 2rem;
-        }
-        
-        .insights-column {
-            background: var(--bg-tertiary);
-            border: 1px solid var(--border-color);
-            border-radius: 12px;
-            padding: 1.5rem;
-        }
-        
-        .insights-column.positive {
-            border-left: 3px solid var(--accent-primary);
-        }
-        
-        .insights-column.focus {
-            border-left: 3px solid var(--accent-warning);
-        }
-        
-        .insights-column h3 {
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 0.9rem;
-            margin-bottom: 1rem;
-            text-transform: uppercase;
-            letter-spacing: 0.1em;
-        }
-        
-        .insights-column.positive h3 {
-            color: var(--accent-primary);
-        }
-        
-        .insights-column.focus h3 {
-            color: var(--accent-warning);
-        }
-        
-        .insight-item {
-            padding: 0.8rem;
-            background: rgba(0, 0, 0, 0.2);
-            margin-bottom: 0.8rem;
-            border-radius: 6px;
-            font-size: 0.9rem;
-            line-height: 1.5;
-        }
-        
-        .insight-item:last-child {
-            margin-bottom: 0;
-        }
-        
-        .insight-item strong {
-            font-family: 'JetBrains Mono', monospace;
-        }
-        
-        .insights-column.positive .insight-item strong {
-            color: var(--accent-primary);
-        }
-        
-        .insights-column.focus .insight-item strong {
-            color: var(--accent-warning);
-        }
-        
-        /* Journal Grid */
-        .journal-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-            gap: 1rem;
-            margin-bottom: 2rem;
-        }
-        
-        .journal-card {
-            background: var(--bg-tertiary);
-            border: 1px solid var(--border-color);
-            border-radius: 8px;
-            padding: 1.2rem;
-            transition: all 0.3s ease;
-        }
-        
-        .journal-card:hover {
-            border-color: var(--accent-primary);
-            transform: translateY(-2px);
-        }
-        
-        .journal-card h4 {
-            font-size: 1.1rem;
-            margin-bottom: 0.8rem;
-            color: var(--text-primary);
             font-weight: 600;
         }
         
-        .journal-stats {
-            display: flex;
-            justify-content: space-between;
-            gap: 1rem;
+        .view-toggle-btn:hover {
+            border-color: var(--accent-secondary);
+            color: var(--accent-secondary);
         }
         
-        .journal-stat {
-            flex: 1;
-            text-align: center;
+        .view-toggle-btn.active {
+            background: var(--accent-secondary);
+            border-color: var(--accent-secondary);
+            color: var(--bg-primary);
         }
-        
-        .journal-stat-value {
-            font-size: 1.8rem;
-            font-weight: 700;
-            font-family: 'JetBrains Mono', monospace;
-            color: var(--text-dim);
-        }
-        
-        .journal-stat-value.highlighted {
-            color: var(--accent-primary);
-        }
-        
-        .journal-stat-label {
-            font-size: 0.75rem;
-            color: var(--text-secondary);
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-            margin-top: 0.3rem;
-        }
-        
+
+        /* Journal Gauge Styles */
         .journal-gauge {
-            margin: 1rem 0 0.5rem 0;
-            height: 60px;
             position: relative;
-            display: flex;
-            justify-content: center;
-            align-items: flex-end;
-            background: radial-gradient(circle at center bottom, rgba(96, 96, 96, 0.2) 0%, transparent 70%);
-            border-radius: 8px 8px 0 0;
+            width: 120px;
+            height: 60px;
+            margin: 1rem auto;
         }
         
         .journal-gauge-arc {
-            position: absolute;
-            bottom: 0;
             width: 120px;
             height: 60px;
-            border: 2px solid rgba(96, 96, 96, 0.5);
-            border-bottom: none;
             border-radius: 120px 120px 0 0;
+            background: linear-gradient(to right, #666 0%, #666 50%, #666 100%);
+            position: relative;
+            overflow: hidden;
         }
         
         .journal-gauge-arc::before {
             content: '';
             position: absolute;
-            left: -2px;
-            bottom: 0;
-            width: 2px;
-            height: 12px;
-            background: #000;
-        }
-        
-        .journal-gauge-arc::after {
-            content: '';
-            position: absolute;
-            right: -2px;
-            bottom: 0;
-            width: 2px;
-            height: 12px;
-            background: #000;
-        }
-        
-        .journal-gauge-ticks {
-            position: absolute;
-            bottom: 0;
-            width: 120px;
-            height: 60px;
-        }
-        
-        .journal-gauge-ticks::before {
-            content: '';
-            position: absolute;
-            left: 50%;
-            bottom: 0;
-            width: 2px;
-            height: 8px;
-            background: #000;
-            transform: translateX(-50%);
+            width: 100px;
+            height: 50px;
+            background: var(--bg-tertiary);
+            border-radius: 100px 100px 0 0;
+            top: 10px;
+            left: 10px;
         }
         
         .journal-needle {
             position: absolute;
-            bottom: 0;
-            left: 50%;
-            width: 3px;
+            width: 2px;
             height: 50px;
-            transform-origin: bottom center;
-            transition: all 0.5s cubic-bezier(0.4, 0.0, 0.2, 1);
-            z-index: 2;
-        }
-        
-        .journal-needle::before {
-            content: '';
-            position: absolute;
+            background: #ff8800;
             bottom: 0;
             left: 50%;
-            transform: translateX(-50%);
-            width: 10px;
-            height: 10px;
-            border-radius: 50%;
-            background: var(--bg-tertiary);
-            border: 2px solid;
-            border-color: inherit;
-            z-index: 3;
+            transform-origin: bottom center;
+            transition: transform 0.5s cubic-bezier(0.4, 0.0, 0.2, 1);
+            z-index: 10;
         }
         
         .journal-needle::after {
             content: '';
             position: absolute;
-            bottom: 5px;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 0;
-            height: 0;
-            border-left: 5px solid transparent;
-            border-right: 5px solid transparent;
-            border-bottom: 45px solid;
-            border-bottom-color: inherit;
-        }
-        
-        /* Activity Cards */
-        .activity-section {
-            margin-bottom: 2rem;
-        }
-        
-        .activity-card {
-            background: var(--bg-tertiary);
-            border: 1px solid var(--border-color);
-            border-radius: 12px;
-            padding: 1.5rem;
-            margin-bottom: 1.5rem;
-        }
-        
-        .activity-card h4 {
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 1.1rem;
-            margin-bottom: 1rem;
-            color: var(--accent-primary);
-            text-transform: uppercase;
-        }
-        
-        .activity-stats {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-            gap: 1rem;
-        }
-        
-        .activity-stat {
-            background: rgba(0, 0, 0, 0.3);
-            padding: 1rem;
-            border-radius: 6px;
-            border-left: 3px solid var(--accent-secondary);
-        }
-        
-        .activity-stat-label {
-            font-size: 0.75rem;
-            color: var(--text-secondary);
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-            margin-bottom: 0.5rem;
-        }
-        
-        .activity-stat-values {
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 0.85rem;
-            color: var(--text-primary);
-        }
-        
-        .activity-stat-values span {
-            display: block;
-            margin: 0.2rem 0;
-        }
-        
-        /* Loading State */
-        .loading {
-            text-align: center;
-            padding: 4rem;
-            color: var(--text-secondary);
-        }
-        
-        .loading::after {
-            content: '...';
-            animation: dots 1.5s steps(4, end) infinite;
-        }
-        
-        @keyframes dots {
-            0%, 20% { content: '.'; }
-            40% { content: '..'; }
-            60%, 100% { content: '...'; }
-        }
-        
-        /* Responsive */
-        @media (max-width: 768px) {
-            .header {
-                padding: 1rem;
-            }
-            
-            .content {
-                padding: 1rem;
-            }
-            
-            .tabs {
-                padding: 0 1rem;
-            }
-            
-            .tab {
-                padding: 1rem 1.5rem;
-                font-size: 0.75rem;
-            }
-            
-            .dashboard-grid {
-                grid-template-columns: 1fr;
-            }
+            width: 8px;
+            height: 8px;
+            background: #ff8800;
+            border-radius: 50%;
+            bottom: -4px;
+            left: -3px;
         }
     </style>
 </head>
@@ -680,614 +348,201 @@
             <h1>WHOOP ANALYTICS</h1>
             <p>Advanced Performance Tracking & Insights</p>
         </div>
-        <div class="header-goals">
-            <h3>Goals</h3>
-            <div id="goals-display"></div>
-        </div>
-        <div class="header-right">
-            <div id="user-name">Your Name</div>
-            <div id="date-range">Loading...</div>
-            <div id="days-count"></div>
+        <div style="display: flex; align-items: center; gap: 2rem;">
+            <div class="header-right">
+                <div id="user-name" style="display: none;"></div>
+                <div id="date-range">Upload data to begin</div>
+                <div id="days-count"></div>
+            </div>
+            <div class="upload-zone" id="upload-zone">
+                <div class="upload-zone-title">📁 Upload Data</div>
+                <div class="upload-zone-hint">Click or drag files here</div>
+            </div>
+            <input type="file" id="file-input" multiple accept=".xlsx,.csv" style="display: none;">
         </div>
     </div>
     
     <div class="tabs">
-        <button class="tab active" data-tab="journal">Journal</button>
-        <button class="tab" data-tab="physio">Health Trends</button>
+        <button class="tab active" data-tab="home">Home</button>
+        <button class="tab" data-tab="journal">Journal</button>
+        <button class="tab" data-tab="health">Health Trends</button>
         <button class="tab" data-tab="workouts">Workouts</button>
         <button class="tab" data-tab="sleep">Sleep</button>
     </div>
     
     <div class="content">
-        <!-- Journal Tab -->
-        <div id="journal" class="tab-content active">
-            <div class="import-section">
-                <h3>Import:</h3>
-                <div class="file-input-wrapper">
-                    <input type="file" id="journal-file" class="file-input" accept=".xlsx,.csv">
-                    <label for="journal-file" class="file-label">Upload</label>
-                </div>
-                <div id="journal-status" class="import-status"></div>
+        <div id="home" class="tab-content active">
+            <div class="goals-section">
+                <h3 style="color: var(--accent-secondary); font-size: 1.5rem;">Goals</h3>
+                <div id="goals-display" class="goals-content"></div>
             </div>
-            
-            <div id="journal-content" class="loading">Loading journal data</div>
+            <div class="chart-container" style="width: 100%; max-width: none;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                    <h3>HRV Trend</h3>
+                    <div style="display: flex; gap: 0.5rem;">
+                        <button id="daily-view-btn" class="view-toggle-btn active" onclick="switchHRVView('daily')">Daily</button>
+                        <button id="weekly-view-btn" class="view-toggle-btn" onclick="switchHRVView('weekly')">Weekly</button>
+                    </div>
+                </div>
+                <div class="chart-wrapper" style="height: 400px;">
+                    <canvas id="home-hrv-chart"></canvas>
+                </div>
+            </div>
         </div>
         
-        <!-- Physiological Tab -->
-        <div id="physio" class="tab-content">
-            <div class="import-section">
-                <h3>Import:</h3>
-                <div class="file-input-wrapper">
-                    <input type="file" id="physio-file" class="file-input" accept=".csv">
-                    <label for="physio-file" class="file-label">Upload</label>
-                </div>
-                <div id="physio-status" class="import-status"></div>
-            </div>
-            
-            <div id="physio-content" class="loading">Loading physiological data</div>
+        <div id="journal" class="tab-content">
+            <div id="journal-content">Upload journal data to see insights</div>
         </div>
         
-        <!-- Workouts Tab -->
+        <div id="health" class="tab-content">
+            <div id="health-content">Upload health data to see trends</div>
+        </div>
+        
         <div id="workouts" class="tab-content">
-            <div class="import-section">
-                <h3>Import:</h3>
-                <div class="file-input-wrapper">
-                    <input type="file" id="workout-file" class="file-input" accept=".csv">
-                    <label for="workout-file" class="file-label">Upload</label>
-                </div>
-                <div id="workout-status" class="import-status"></div>
-            </div>
-            
-            <div id="workout-content" class="loading">Loading workout data</div>
+            <div id="workouts-content">Upload workout data to see analysis</div>
         </div>
         
-        <!-- Sleep Tab -->
         <div id="sleep" class="tab-content">
-            <div class="import-section">
-                <h3>Import:</h3>
-                <div class="file-input-wrapper">
-                    <input type="file" id="sleep-file" class="file-input" accept=".csv">
-                    <label for="sleep-file" class="file-label">Upload</label>
-                </div>
-                <div id="sleep-status" class="import-status"></div>
-            </div>
-            
-            <div id="sleep-content" class="loading">Loading sleep data</div>
+            <div id="sleep-content">Upload sleep data to see patterns</div>
         </div>
     </div>
-
+    
     <script>
-        // Data storage
+        // Global variables
         let journalData = [];
         let physioData = [];
         let workoutData = [];
         let sleepData = [];
         let charts = {};
+        let currentHRVView = 'daily';
         
-        // Tab switching using event delegation - FIXED VERSION
-        document.addEventListener('DOMContentLoaded', function() {
-            document.querySelector('.tabs').addEventListener('click', function(e) {
-                if (e.target.classList.contains('tab')) {
-                    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-                    document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-                    
-                    e.target.classList.add('active');
-                    const tabName = e.target.getAttribute('data-tab');
-                    document.getElementById(tabName).classList.add('active');
+        // Tab switching
+        document.querySelector('.tabs').addEventListener('click', function(e) {
+            if (e.target.classList.contains('tab')) {
+                document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+                
+                e.target.classList.add('active');
+                const tabName = e.target.getAttribute('data-tab');
+                document.getElementById(tabName).classList.add('active');
+            }
+        });
+        
+        // Drag and drop upload
+        const uploadZone = document.getElementById('upload-zone');
+        const fileInput = document.getElementById('file-input');
+        
+        uploadZone.addEventListener('click', () => fileInput.click());
+        
+        uploadZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadZone.classList.add('drag-over');
+        });
+        
+        uploadZone.addEventListener('dragleave', () => {
+            uploadZone.classList.remove('drag-over');
+        });
+        
+        uploadZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadZone.classList.remove('drag-over');
+            processFiles(e.dataTransfer.files);
+        });
+        
+        fileInput.addEventListener('change', (e) => {
+            processFiles(e.target.files);
+        });
+        
+        function processFiles(files) {
+            let processed = 0;
+            
+            Array.from(files).forEach(file => {
+                const fileName = file.name.toLowerCase();
+                
+                if (fileName.includes('journal')) {
+                    handleJournalFile(file);
+                    processed++;
+                } else if (fileName.includes('physiological') || fileName.includes('cycle')) {
+                    handlePhysioFile(file);
+                    processed++;
+                } else if (fileName.includes('workout')) {
+                    handleWorkoutFile(file);
+                    processed++;
+                } else if (fileName.includes('sleep')) {
+                    handleSleepFile(file);
+                    processed++;
                 }
             });
-        });
-        
-        // Local storage functions with error handling
-        function saveToLocalStorage(key, data) {
-            try {
-                localStorage.setItem(key, JSON.stringify(data));
-                return true;
-            } catch (e) {
-                console.error('Error saving to localStorage:', e);
-                return false;
-            }
-        }
-        
-        function loadFromLocalStorage(key) {
-            try {
-                const data = localStorage.getItem(key);
-                return data ? JSON.parse(data) : [];
-            } catch (e) {
-                console.error('Error loading from localStorage:', e);
-                return [];
-            }
-        }
-        
-        // Merge new data with existing data, avoiding duplicates by date
-        function mergeData(existingData, newData, dateField) {
-            const existingDates = new Set(existingData.map(item => item[dateField]));
-            const uniqueNewData = newData.filter(item => !existingDates.has(item[dateField]));
-            return [...existingData, ...uniqueNewData].sort((a, b) => 
-                new Date(a[dateField]) - new Date(b[dateField])
-            );
-        }
-        
-        // File upload handlers - attach after DOM loads
-        document.addEventListener('DOMContentLoaded', function() {
-            document.getElementById('journal-file').addEventListener('change', handleJournalUpload);
-            document.getElementById('physio-file').addEventListener('change', handlePhysioUpload);
-            document.getElementById('workout-file').addEventListener('change', handleWorkoutUpload);
-            document.getElementById('sleep-file').addEventListener('change', handleSleepUpload);
-        });
-        
-        function handleJournalUpload(e) {
-            const file = e.target.files[0];
-            if (!file) return;
             
-            const reader = new FileReader();
-            reader.onload = function(event) {
-                try {
-                    const workbook = XLSX.read(event.target.result, { type: 'binary' });
-                    const sheetName = workbook.SheetNames[0];
-                    const data = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName]);
-                    
-                    const existing = loadFromLocalStorage('journalData');
-                    journalData = mergeData(existing, data, 'Cycle start time');
-                    saveToLocalStorage('journalData', journalData);
-                    
-                    renderJournalDashboard();
+            if (processed > 0) {
+                setTimeout(() => {
+                    const userName = prompt('Enter your name:', 'Your Name') || 'Your Name';
+                    document.getElementById('user-name').textContent = userName;
+                    document.getElementById('user-name').style.display = 'block';
                     updateHeaderInfo();
-                    document.getElementById('journal-status').textContent = `✓ Imported ${data.length} entries (${journalData.length} total)`;
-                    document.getElementById('journal-status').className = 'import-status success';
+                    renderGoals();
+                    renderHomeHRVChart();
+                }, 1000);
+            }
+        }
+        
+        function handleJournalFile(file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const workbook = XLSX.read(e.target.result, { type: 'binary' });
+                    const sheetName = workbook.SheetNames[0];
+                    journalData = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName]);
+                    localStorage.setItem('journalData', JSON.stringify(journalData));
+                    renderJournal();
                 } catch (error) {
-                    document.getElementById('journal-status').textContent = `✗ Error: ${error.message}`;
-                    document.getElementById('journal-status').className = 'import-status error';
+                    alert('Error loading journal: ' + error.message);
                 }
             };
             reader.readAsBinaryString(file);
         }
         
-        function handlePhysioUpload(e) {
-            const file = e.target.files[0];
-            if (!file) return;
-            
+        function handlePhysioFile(file) {
             Papa.parse(file, {
                 header: true,
                 complete: function(results) {
-                    try {
-                        const existing = loadFromLocalStorage('physioData');
-                        physioData = mergeData(existing, results.data, 'Cycle start time');
-                        saveToLocalStorage('physioData', physioData);
-                        
-                        renderPhysioDashboard();
-                        updateHeaderInfo();
-                        renderGoals();
-                        document.getElementById('physio-status').textContent = `✓ Imported ${results.data.length} cycles (${physioData.length} total)`;
-                        document.getElementById('physio-status').className = 'import-status success';
-                    } catch (error) {
-                        document.getElementById('physio-status').textContent = `✗ Error: ${error.message}`;
-                        document.getElementById('physio-status').className = 'import-status error';
-                    }
+                    physioData = results.data.filter(d => d['Cycle start time'] && d['Cycle start time'].trim());
+                    localStorage.setItem('physioData', JSON.stringify(physioData));
+                    renderHealth();
+                    updateHeaderInfo();
+                    renderGoals();
+                    renderHomeHRVChart();
                 }
             });
         }
         
-        function handleWorkoutUpload(e) {
-            const file = e.target.files[0];
-            if (!file) return;
-            
+        function handleWorkoutFile(file) {
             Papa.parse(file, {
                 header: true,
                 complete: function(results) {
-                    try {
-                        const existing = loadFromLocalStorage('workoutData');
-                        workoutData = mergeData(existing, results.data, 'Workout start time');
-                        saveToLocalStorage('workoutData', workoutData);
-                        
-                        renderWorkoutDashboard();
-                        updateHeaderInfo();
-                        document.getElementById('workout-status').textContent = `✓ Imported ${results.data.length} workouts (${workoutData.length} total)`;
-                        document.getElementById('workout-status').className = 'import-status success';
-                    } catch (error) {
-                        document.getElementById('workout-status').textContent = `✗ Error: ${error.message}`;
-                        document.getElementById('workout-status').className = 'import-status error';
-                    }
+                    workoutData = results.data.filter(d => d['Activity name'] && d['Activity name'].trim());
+                    localStorage.setItem('workoutData', JSON.stringify(workoutData));
+                    renderWorkouts();
+                    updateHeaderInfo();
                 }
             });
         }
         
-        function handleSleepUpload(e) {
-            const file = e.target.files[0];
-            if (!file) return;
-            
+        function handleSleepFile(file) {
             Papa.parse(file, {
                 header: true,
                 complete: function(results) {
-                    try {
-                        const existing = loadFromLocalStorage('sleepData');
-                        sleepData = mergeData(existing, results.data, 'Sleep onset');
-                        saveToLocalStorage('sleepData', sleepData);
-                        
-                        renderSleepDashboard();
-                        updateHeaderInfo();
-                        document.getElementById('sleep-status').textContent = `✓ Imported ${results.data.length} sleep sessions (${sleepData.length} total)`;
-                        document.getElementById('sleep-status').className = 'import-status success';
-                    } catch (error) {
-                        document.getElementById('sleep-status').textContent = `✗ Error: ${error.message}`;
-                        document.getElementById('sleep-status').className = 'import-status error';
-                    }
+                    sleepData = results.data.filter(d => d['Sleep onset'] && d['Sleep onset'].trim());
+                    localStorage.setItem('sleepData', JSON.stringify(sleepData));
+                    renderSleep();
+                    updateHeaderInfo();
                 }
             });
-        }
-        
-        // Journal Dashboard
-        function renderJournalDashboard() {
-            if (journalData.length === 0) return;
-            
-            // Filter out masturbation entries
-            const filteredData = journalData.filter(entry => {
-                const question = (entry['Question text'] || '').toLowerCase();
-                return !question.includes('masturbat');
-            });
-            
-            const questionStats = {};
-            
-            filteredData.forEach(entry => {
-                const question = entry['Question text'];
-                const answered = entry['Answered yes'];
-                
-                if (!questionStats[question]) {
-                    questionStats[question] = { yes: 0, no: 0 };
-                }
-                
-                if (answered === true || answered === 'TRUE' || answered === 'true') {
-                    questionStats[question].yes++;
-                } else {
-                    questionStats[question].no++;
-                }
-            });
-            
-            // Generate insights based on correlations
-            const insights = generateJournalInsights(filteredData, questionStats);
-            
-            let html = `
-                <div class="insights-section" style="margin-bottom: 2rem;">
-                    <div class="insights-column positive">
-                        <h3>🔗 Interesting Correlations</h3>
-                        ${insights.positive.map(insight => `<div class="insight-item">${insight}</div>`).join('')}
-                    </div>
-                    <div class="insights-column focus" style="border-left-color: var(--accent-danger);">
-                        <h3>⚠ Alarms</h3>
-                        ${insights.alarms.map(alarm => `<div class="insight-item">${alarm}</div>`).join('')}
-                    </div>
-                </div>
-                <div class="journal-grid">
-            `;
-            
-            Object.keys(questionStats).sort().forEach(question => {
-                const stats = questionStats[question];
-                const total = stats.yes + stats.no;
-                const yesPercent = total > 0 ? ((stats.yes / total) * 100).toFixed(0) : 0;
-                const noPercent = total > 0 ? ((stats.no / total) * 100).toFixed(0) : 0;
-                const yesHighlighted = stats.yes >= stats.no ? 'highlighted' : '';
-                const noHighlighted = stats.no > stats.yes ? 'highlighted' : '';
-                
-                // Calculate needle rotation: -90deg (No/left) to +90deg (Yes/right)
-                // yesPercent: 0% = -90deg, 50% = 0deg, 100% = +90deg
-                const needleRotation = (yesPercent / 100) * 180 - 90;
-                
-                // Needle is blue
-                const needleColor = 'var(--accent-secondary)';
-                
-                html += `
-                    <div class="journal-card">
-                        <h4>${question}</h4>
-                        <div class="journal-gauge">
-                            <div class="journal-gauge-arc"></div>
-                            <div class="journal-gauge-ticks"></div>
-                            <div class="journal-needle" style="transform: rotate(${needleRotation}deg); border-color: ${needleColor}; box-shadow: 0 0 10px rgba(0, 221, 255, 0.6);"></div>
-                        </div>
-                        <div class="journal-stats">
-                            <div class="journal-stat">
-                                <div class="journal-stat-value ${noHighlighted}">${stats.no}</div>
-                                <div class="journal-stat-label">No (${noPercent}%)</div>
-                            </div>
-                            <div class="journal-stat">
-                                <div class="journal-stat-value ${yesHighlighted}">${stats.yes}</div>
-                                <div class="journal-stat-label">Yes (${yesPercent}%)</div>
-                            </div>
-                        </div>
-                    </div>
-                `;
-            });
-            
-            html += '</div>';
-            document.getElementById('journal-content').innerHTML = html;
-        }
-        
-        function renderPhysioDashboard() {
-            if (physioData.length === 0) return;
-            
-            const validData = physioData.filter(d => d['Cycle start time'] && d['Cycle start time'].trim());
-            
-            // Calculate averages
-            const avgRecovery = calculateAverage(validData, 'Recovery score %');
-            const avgHRV = calculateAverage(validData, 'Heart rate variability (ms)');
-            const avgRHR = calculateAverage(validData, 'Resting heart rate (bpm)');
-            const avgStrain = calculateAverage(validData, 'Day Strain');
-            
-            
-            // Generate insights
-            const physioInsights = generatePhysioInsights(validData, avgRecovery, avgHRV, avgRHR, avgStrain);
-            
-            let html = `
-                <div class="insights-section" style="margin-bottom: 2rem;">
-                    <div class="insights-column positive">
-                        <h3>✓ Positive Insights</h3>
-                        ${physioInsights.positive.map(insight => `<div class="insight-item">${insight}</div>`).join('')}
-                    </div>
-                    <div class="insights-column focus" style="border-left-color: var(--accent-danger);">
-                        <h3>⚠ Alarms</h3>
-                        ${physioInsights.alarms.map(alarm => `<div class="insight-item">${alarm}</div>`).join('')}
-                    </div>
-                </div>
-                <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 1.5rem; margin-bottom: 2rem;">
-                    <div class="metric-card">
-                        <h3>Avg Recovery</h3>
-                        <div class="metric-value">${avgRecovery.toFixed(0)}%</div>
-                        <div class="metric-label">Recovery Score</div>
-                    </div>
-                    <div class="metric-card">
-                        <h3>Avg HRV</h3>
-                        <div class="metric-value">${avgHRV.toFixed(0)}</div>
-                        <div class="metric-label">Milliseconds</div>
-                    </div>
-                    <div class="metric-card">
-                        <h3>Avg RHR</h3>
-                        <div class="metric-value">${avgRHR.toFixed(0)}</div>
-                        <div class="metric-label">Beats per Minute</div>
-                    </div>
-                    <div class="metric-card">
-                        <h3>Avg Strain</h3>
-                        <div class="metric-value">${avgStrain.toFixed(1)}</div>
-                        <div class="metric-label">Day Strain</div>
-                    </div>
-                </div>
-            `;
-            
-            // Add charts
-            const chartConfigs = [
-                { title: 'Recovery Score', field: 'Recovery score %', color: '#00ff88' },
-                { title: 'Resting Heart Rate', field: 'Resting heart rate (bpm)', color: '#ff3366' },
-                { title: 'HRV (Heart Rate Variability)', field: 'Heart rate variability (ms)', color: '#00ddff' },
-                { title: 'Skin Temperature (°F)', field: 'Skin temp (celsius)', color: '#ffaa00', convert: celsiusToFahrenheit },
-                { title: 'Blood Oxygen', field: 'Blood oxygen %', color: '#00ff88' },
-                { title: 'Day Strain', field: 'Day Strain', color: '#ff3366' },
-                { title: 'Energy Burned', field: 'Energy burned (cal)', color: '#ffaa00' },
-                { title: 'Max Heart Rate', field: 'Max HR (bpm)', color: '#ff3366' },
-                { title: 'Average Heart Rate', field: 'Average HR (bpm)', color: '#00ddff' }
-            ];
-            
-            chartConfigs.forEach((config, index) => {
-                const trendPerDay = calculateDailyTrend(validData, config.field, config.convert);
-                const trendDirection = trendPerDay > 0 ? '↑' : trendPerDay < 0 ? '↓' : '→';
-                const trendColor = trendPerDay > 0 ? '#00ff88' : trendPerDay < 0 ? '#ff3366' : '#a0a0a0';
-                
-                html += `
-                    <div class="chart-container" style="width: 100%; max-width: none;">
-                        <h3>${config.title} 
-                            <span style="color: ${trendColor}; font-size: 0.9rem; margin-left: 1rem;">
-                                ${trendDirection} ${Math.abs(trendPerDay).toFixed(2)}/day
-                            </span>
-                        </h3>
-                        <div class="chart-wrapper" style="height: 300px;">
-                            <canvas id="physio-chart-${index}"></canvas>
-                        </div>
-                    </div>
-                `;
-            });
-            
-            document.getElementById('physio-content').innerHTML = html;
-            
-            // Render charts after DOM update
-            setTimeout(() => {
-                chartConfigs.forEach((config, index) => {
-                    createLineChart(`physio-chart-${index}`, validData, config);
-                });
-            }, 100);
-        }
-        
-        function calculateAverage(data, field) {
-            const values = data.map(d => parseFloat(d[field])).filter(v => !isNaN(v));
-            return values.length > 0 ? values.reduce((a, b) => a + b, 0) / values.length : 0;
-        }
-        
-        function generateJournalInsights(data, questionStats) {
-            const positive = [];
-            const alarms = [];
-            
-            // Find correlations between habits
-            const questions = Object.keys(questionStats);
-            
-            // Group data by date to find correlations
-            const dateMap = {};
-            data.forEach(entry => {
-                const date = entry['Cycle start time'];
-                if (!dateMap[date]) {
-                    dateMap[date] = {};
-                }
-                const question = entry['Question text'];
-                const answered = entry['Answered yes'];
-                dateMap[date][question] = (answered === true || answered === 'TRUE' || answered === 'true');
-            });
-            
-            // Find positive correlations (>70%)
-            for (let i = 0; i < questions.length; i++) {
-                for (let j = i + 1; j < questions.length; j++) {
-                    const q1 = questions[i];
-                    const q2 = questions[j];
-                    
-                    let bothTrue = 0;
-                    let q1True = 0;
-                    
-                    Object.values(dateMap).forEach(day => {
-                        if (day[q1] === true) {
-                            q1True++;
-                            if (day[q2] === true) {
-                                bothTrue++;
-                            }
-                        }
-                    });
-                    
-                    if (q1True > 5) {
-                        const correlation = (bothTrue / q1True) * 100;
-                        
-                        if (correlation > 70) {
-                            positive.push(`<strong>Positive Pattern:</strong> When you ${q1.toLowerCase()}, you also ${q2.toLowerCase()} ${correlation.toFixed(0)}% of the time`);
-                        }
-                    }
-                }
-            }
-            
-            // Find concerning patterns (negative habit correlations)
-            const negativeIndicators = ['gas', 'bloat', 'headache', 'irritable', 'sick', 'poor', 'low energy'];
-            const positiveHabits = ['breakfast', 'exercise', 'gratitude', 'breathwork', 'protein', 'vitamin'];
-            
-            for (let i = 0; i < questions.length; i++) {
-                for (let j = 0; j < questions.length; j++) {
-                    if (i === j) continue;
-                    
-                    const q1 = questions[i];
-                    const q2 = questions[j];
-                    
-                    const hasPositive = positiveHabits.some(h => q1.toLowerCase().includes(h));
-                    const hasNegative = negativeIndicators.some(h => q2.toLowerCase().includes(h));
-                    
-                    if (hasPositive && hasNegative) {
-                        let bothTrue = 0;
-                        let q1True = 0;
-                        
-                        Object.values(dateMap).forEach(day => {
-                            if (day[q1] === true) {
-                                q1True++;
-                                if (day[q2] === true) {
-                                    bothTrue++;
-                                }
-                            }
-                        });
-                        
-                        if (q1True > 5) {
-                            const correlation = (bothTrue / q1True) * 100;
-                            
-                            if (correlation > 50) {
-                                alarms.push(`<strong>Concerning Correlation:</strong> When you ${q1.toLowerCase()}, you ${q2.toLowerCase()} ${correlation.toFixed(0)}% of the time`);
-                            }
-                        }
-                    }
-                }
-            }
-            
-            // Add default messages if none found
-            if (positive.length === 0) {
-                positive.push('<strong>Tracking Progress:</strong> Continue logging consistently to discover positive habit patterns');
-            }
-            
-            if (alarms.length === 0) {
-                alarms.push('<strong>No Concerns:</strong> No alarming patterns detected in your data');
-            }
-            
-            // Randomize and pick one correlation
-            const randomPositive = positive.length > 0 ? [positive[Math.floor(Math.random() * positive.length)]] : ['<strong>Keep Tracking:</strong> More data needed to find interesting correlations'];
-            return { positive: randomPositive, alarms: alarms.slice(0, 3) };
-        }
-        
-        function generatePhysioInsights(data, avgRecovery, avgHRV, avgRHR, avgStrain) {
-            const positive = [];
-            const alarms = [];
-            
-            // Check trends
-            const recoveryTrend = calculateDailyTrend(data, 'Recovery score %');
-            const hrvTrend = calculateDailyTrend(data, 'Heart rate variability (ms)');
-            const rhrTrend = calculateDailyTrend(data, 'Resting heart rate (bpm)');
-            
-            // Positive insights
-            if (recoveryTrend > 0.5) {
-                positive.push(`<strong>Recovery Improving:</strong> Your recovery is trending up ${recoveryTrend.toFixed(2)}% per day`);
-            }
-            if (hrvTrend > 1) {
-                positive.push(`<strong>HRV Increasing:</strong> Heart rate variability up ${hrvTrend.toFixed(1)}ms per day - excellent adaptation`);
-            }
-            if (avgRecovery >= 67) {
-                positive.push(`<strong>Strong Recovery:</strong> ${avgRecovery.toFixed(0)}% average keeps you in the green zone`);
-            }
-            if (rhrTrend < -0.5) {
-                positive.push(`<strong>RHR Improving:</strong> Resting heart rate decreasing ${Math.abs(rhrTrend).toFixed(1)} bpm/day`);
-            }
-            
-            // Alarms
-            if (recoveryTrend < -0.5) {
-                alarms.push(`<strong>Recovery Declining:</strong> Down ${Math.abs(recoveryTrend).toFixed(2)}% per day - consider more rest`);
-            }
-            if (hrvTrend < -1) {
-                alarms.push(`<strong>HRV Decreasing:</strong> Down ${Math.abs(hrvTrend).toFixed(1)}ms per day - possible overtraining`);
-            }
-            if (avgRecovery < 50) {
-                alarms.push(`<strong>Low Recovery:</strong> ${avgRecovery.toFixed(0)}% average suggests inadequate rest`);
-            }
-            if (avgStrain > 18) {
-                alarms.push(`<strong>High Strain:</strong> ${avgStrain.toFixed(1)} average strain may be unsustainable`);
-            }
-            
-            if (positive.length === 0) positive.push('<strong>Steady State:</strong> Metrics are stable - maintain your current routine');
-            if (alarms.length === 0) alarms.push('<strong>No Concerns:</strong> All metrics within healthy ranges');
-            
-            return { positive: positive.slice(0, 3), alarms: alarms.slice(0, 3) };
-        }
-
-        
-        function celsiusToFahrenheit(celsius) {
-            return celsius * 9/5 + 32;
-        }
-        
-        function minToHours(min) {
-            return min / 60;
-        }
-        
-        function calculateDailyTrend(data, field, convertFn) {
-            if (data.length < 2) return 0;
-            
-            const values = data.map(d => {
-                let val = parseFloat(d[field]);
-                if (convertFn) val = convertFn(val);
-                return val;
-            }).filter(v => !isNaN(v));
-            
-            if (values.length < 2) return 0;
-            
-            // Simple linear regression to get daily change
-            const n = values.length;
-            const xSum = (n * (n - 1)) / 2; // Sum of 0,1,2,...,n-1
-            const ySum = values.reduce((a, b) => a + b, 0);
-            const xySum = values.reduce((sum, y, i) => sum + (i * y), 0);
-            const xSquareSum = (n * (n - 1) * (2 * n - 1)) / 6;
-            
-            const slope = (n * xySum - xSum * ySum) / (n * xSquareSum - xSum * xSum);
-            
-            return slope;
         }
         
         function updateHeaderInfo() {
-            // Prompt for name every time
-            const userName = prompt('Enter your name:', 'Your Name') || 'Your Name';
-            document.getElementById('user-name').textContent = userName;
-            
-            // Calculate date range from all data
             let allDates = [];
             
-            if (journalData.length > 0) {
-                journalData.forEach(d => {
-                    const date = new Date(d['Cycle start time']);
-                    if (!isNaN(date.getTime()) && date.getFullYear() > 2000) {
-                        allDates.push(date);
-                    }
-                });
-            }
             if (physioData.length > 0) {
                 physioData.forEach(d => {
                     const date = new Date(d['Cycle start time']);
@@ -1296,36 +551,16 @@
                     }
                 });
             }
-            if (workoutData.length > 0) {
-                workoutData.forEach(d => {
-                    const date = new Date(d['Workout start time']);
-                    if (!isNaN(date.getTime()) && date.getFullYear() > 2000) {
-                        allDates.push(date);
-                    }
-                });
-            }
-            if (sleepData.length > 0) {
-                sleepData.forEach(d => {
-                    const date = new Date(d['Sleep onset']);
-                    if (!isNaN(date.getTime()) && date.getFullYear() > 2000) {
-                        allDates.push(date);
-                    }
-                });
-            }
             
             if (allDates.length > 0) {
-                // Sort dates to ensure we get true min and max
                 allDates.sort((a, b) => a - b);
                 const minDate = allDates[0];
                 const maxDate = allDates[allDates.length - 1];
                 const daysDiff = Math.ceil((maxDate - minDate) / (1000 * 60 * 60 * 24)) + 1;
                 
                 document.getElementById('date-range').textContent = 
-                    `${minDate.toLocaleDateString()} - ${maxDate.toLocaleDateString()}`;
-                document.getElementById('days-count').innerHTML = `<strong>${daysDiff} days</strong>`;
-            } else {
-                document.getElementById('date-range').textContent = 'No valid dates found';
-                document.getElementById('days-count').textContent = '';
+                    minDate.toLocaleDateString() + ' - ' + maxDate.toLocaleDateString();
+                document.getElementById('days-count').innerHTML = '<strong>' + daysDiff + ' days</strong>';
             }
         }
         
@@ -1334,36 +569,33 @@
             const currentHRV = physioData.length > 0 ? calculateAverage(physioData, 'Heart rate variability (ms)') : 0;
             
             if (goals.targetHRV && goals.targetDate) {
-                // Calculate daily change needed
                 const today = new Date();
                 const targetDate = new Date(goals.targetDate);
                 const daysRemaining = Math.ceil((targetDate - today) / (1000 * 60 * 60 * 24));
                 const hrvDifference = goals.targetHRV - currentHRV;
                 const dailyChangeNeeded = daysRemaining > 0 ? hrvDifference / daysRemaining : 0;
                 
-                // Format date as mm/dd/yyyy
-                const formattedDate = `${(targetDate.getMonth() + 1).toString().padStart(2, '0')}/${targetDate.getDate().toString().padStart(2, '0')}/${targetDate.getFullYear()}`;
+                const formattedDate = (targetDate.getMonth() + 1).toString().padStart(2, '0') + '/' +
+                                     targetDate.getDate().toString().padStart(2, '0') + '/' +
+                                     targetDate.getFullYear();
                 
-                document.getElementById('goals-display').innerHTML = `
-                    <div style="font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 0.5rem;">
-                        Current Avg HRV: ${currentHRV.toFixed(0)}ms
-                    </div>
-                    <div class="goal-result">
-                        Daily Change Needed: ${dailyChangeNeeded > 0 ? '+' : ''}${dailyChangeNeeded.toFixed(2)} ms/day to reach ${goals.targetHRV}ms by ${formattedDate}
-                    </div>
-                    <button onclick="clearGoals()" style="margin-top: 0.5rem; background: rgba(255, 51, 102, 0.2); color: var(--accent-danger); border: 1px solid var(--accent-danger); padding: 0.3rem 0.6rem; border-radius: 4px; cursor: pointer; font-size: 0.65rem;">Clear Goals</button>
-                `;
+                document.getElementById('goals-display').innerHTML = 
+                    '<div style="font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 0.5rem;">' +
+                    'Current Avg HRV: ' + currentHRV.toFixed(0) + 'ms</div>' +
+                    '<div class="goal-result">Daily Change Needed: ' + (dailyChangeNeeded > 0 ? '+' : '') + 
+                    dailyChangeNeeded.toFixed(2) + ' ms/day to reach ' + goals.targetHRV + 'ms by ' + formattedDate + '</div>' +
+                    '<button onclick="clearGoals()" style="margin-top: 0.5rem; background: rgba(255, 51, 102, 0.2); ' +
+                    'color: var(--accent-danger); border: 1px solid var(--accent-danger); padding: 0.3rem 0.6rem; ' +
+                    'border-radius: 4px; cursor: pointer; font-size: 0.65rem;">Clear Goals</button>';
             } else {
-                // Show input form
-                document.getElementById('goals-display').innerHTML = `
-                    <div class="goals-input-group">
-                        <label>Target Avg HRV:</label>
-                        <input type="number" id="target-hrv" placeholder="e.g., 80">
-                        <label>Target Date (mm/dd/yyyy):</label>
-                        <input type="text" id="target-date" placeholder="03/15/2026" pattern="\\d{2}/\\d{2}/\\d{4}">
-                        <button onclick="saveGoals()">Set Goal</button>
-                    </div>
-                `;
+                document.getElementById('goals-display').innerHTML = 
+                    '<div class="goals-input-group">' +
+                    '<label>Target Avg HRV:</label>' +
+                    '<input type="number" id="target-hrv" placeholder="e.g., 80">' +
+                    '<label>Target Date (mm/dd/yyyy):</label>' +
+                    '<input type="text" id="target-date" placeholder="03/15/2026">' +
+                    '<button onclick="saveGoals()">Set Goal</button>' +
+                    '</div>';
             }
         }
         
@@ -1385,7 +617,6 @@
                 return;
             }
             
-            // Parse mm/dd/yyyy format
             const datePattern = /^(\d{2})\/(\d{2})\/(\d{4})$/;
             const match = targetDateInput.match(datePattern);
             
@@ -1394,17 +625,8 @@
                 return;
             }
             
-            const month = match[1];
-            const day = match[2];
-            const year = match[3];
-            
-            // Create ISO date string for storage (yyyy-mm-dd)
-            const isoDate = `${year}-${month}-${day}`;
-            
-            const goals = {
-                targetHRV: targetHRV,
-                targetDate: isoDate
-            };
+            const isoDate = match[3] + '-' + match[1] + '-' + match[2];
+            const goals = { targetHRV: targetHRV, targetDate: isoDate };
             
             localStorage.setItem('whoopGoals', JSON.stringify(goals));
             renderGoals();
@@ -1417,315 +639,748 @@
             }
         }
         
-        function createLineChart(canvasId, data, config) {
-            const ctx = document.getElementById(canvasId);
-            if (!ctx) {
-                console.error('Canvas not found:', canvasId);
+        function switchHRVView(view) {
+            currentHRVView = view;
+            document.getElementById('daily-view-btn').classList.toggle('active', view === 'daily');
+            document.getElementById('weekly-view-btn').classList.toggle('active', view === 'weekly');
+            renderHomeHRVChart();
+        }
+        
+        function renderHomeHRVChart() {
+            if (physioData.length === 0) {
                 return;
             }
             
-            console.log('Creating chart:', canvasId, 'with', data.length, 'data points');
+            const validData = physioData.filter(d => d['Cycle start time'] && d['Cycle start time'].trim());
+            let chartData;
             
-            const labels = data.map(d => new Date(d['Cycle start time'] || d['Sleep onset']).toLocaleDateString());
-            let values = data.map(d => parseFloat(d[config.field])).filter(v => !isNaN(v));
-            
-            if (config.convert) {
-                values = values.map(v => config.convert(v));
+            if (currentHRVView === 'daily') {
+                chartData = validData.map(d => ({
+                    date: new Date(d['Cycle start time']),
+                    hrv: parseFloat(d['Heart rate variability (ms)']) || 0
+                })).filter(d => d.hrv > 0);
+            } else {
+                const weeklyData = {};
+                validData.forEach(d => {
+                    const date = new Date(d['Cycle start time']);
+                    const weekStart = new Date(date);
+                    weekStart.setDate(date.getDate() - date.getDay());
+                    const weekKey = weekStart.toISOString().split('T')[0];
+                    
+                    if (!weeklyData[weekKey]) {
+                        weeklyData[weekKey] = [];
+                    }
+                    const hrv = parseFloat(d['Heart rate variability (ms)']);
+                    if (hrv > 0) {
+                        weeklyData[weekKey].push(hrv);
+                    }
+                });
+                
+                chartData = Object.keys(weeklyData).map(weekKey => ({
+                    date: new Date(weekKey),
+                    hrv: weeklyData[weekKey].reduce((a, b) => a + b, 0) / weeklyData[weekKey].length
+                })).sort((a, b) => a.date - b.date);
             }
             
-            console.log('Chart data:', { labels: labels.length, values: values.length });
+            // Reverse data so oldest is on left, newest on right
+            chartData.reverse();
+            const labels = chartData.map(d => d.date.toLocaleDateString());
+            const hrvValues = chartData.map(d => d.hrv);
+            
+            const ctx = document.getElementById('home-hrv-chart');
+            if (!ctx) return;
+            
+            if (charts['home-hrv-chart']) {
+                charts['home-hrv-chart'].destroy();
+            }
+            
+            // Calculate regression line on REVERSED data (oldest to newest)
+            const n = hrvValues.length;
+            const xSum = (n * (n - 1)) / 2;
+            const ySum = hrvValues.reduce((a, b) => a + b, 0);
+            const xySum = hrvValues.reduce((sum, y, i) => sum + (i * y), 0);
+            const xSquareSum = (n * (n - 1) * (2 * n - 1)) / 6;
+            const m = (n * xySum - xSum * ySum) / (n * xSquareSum - xSum * xSum);
+            const b = (ySum - m * xSum) / n;
+            
+            // NOW calculate slope for display (m is the slope per data point)
+            const slopePerUnit = currentHRVView === 'daily' ? m : m * 7;
+            const slopeColor = slopePerUnit > 0 ? '#00ff88' : slopePerUnit < 0 ? '#ff3366' : '#a0a0a0';
+            const unit = currentHRVView === 'daily' ? 'day' : 'week';
+            
+            const regressionLine = hrvValues.map((_, i) => m * i + b);
+            
+            charts['home-hrv-chart'] = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: currentHRVView === 'daily' ? 'Daily HRV' : 'Weekly Avg HRV',
+                        data: hrvValues,
+                        borderColor: '#00ddff',
+                        backgroundColor: 'rgba(0, 221, 255, 0.2)',
+                        borderWidth: 3,
+                        tension: 0.4,
+                        fill: true,
+                        pointRadius: currentHRVView === 'daily' ? 3 : 5,
+                        pointHoverRadius: 6,
+                        pointBackgroundColor: '#00ddff'
+                    }, {
+                        label: 'Trend',
+                        data: regressionLine,
+                        borderColor: slopeColor,
+                        borderWidth: 2,
+                        borderDash: [5, 5],
+                        tension: 0,
+                        fill: false,
+                        pointRadius: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    scales: {
+                        x: {
+                            grid: { color: 'rgba(255, 255, 255, 0.05)' },
+                            ticks: { 
+                                color: '#a0a0a0',
+                                maxTicksLimit: currentHRVView === 'daily' ? 10 : 20
+                            }
+                        },
+                        y: {
+                            grid: { color: 'rgba(255, 255, 255, 0.05)' },
+                            ticks: { color: '#a0a0a0' }
+                        }
+                    },
+                    plugins: {
+                        annotation: {
+                            annotations: {
+                                slope: {
+                                    type: 'label',
+                                    xValue: hrvValues.length - 1,
+                                    yValue: regressionLine[regressionLine.length - 1],
+                                    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                                    content: [(slopePerUnit >= 0 ? '+' : '') + slopePerUnit.toFixed(2) + ' ms/' + unit],
+                                    color: slopeColor,
+                                    font: {
+                                        size: 18,
+                                        weight: 'bold'
+                                    },
+                                    padding: 6,
+                                    borderRadius: 4,
+                                    position: 'end'
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        
+        function calculateAverage(data, field) {
+            const values = data.map(d => parseFloat(d[field])).filter(v => !isNaN(v));
+            return values.length > 0 ? values.reduce((a, b) => a + b, 0) / values.length : 0;
+        }
+        
+
+
+        function calculateSlope(data, field, convert) {
+            if (data.length < 2) return 0;
+            
+            let values = data.map(d => parseFloat(d[field])).filter(v => !isNaN(v));
+            if (convert) values = values.map(v => v / 60);
+            
+            if (values.length < 2) return 0;
+            
+            const n = values.length;
+            const xSum = (n * (n - 1)) / 2;
+            const ySum = values.reduce((a, b) => a + b, 0);
+            const xySum = values.reduce((sum, y, i) => sum + (i * y), 0);
+            const xSquareSum = (n * (n - 1) * (2 * n - 1)) / 6;
+            
+            const slope = (n * xySum - xSum * ySum) / (n * xSquareSum - xSum * xSum);
+            return slope;
+        }
+        
+
+        function generateJournalInsights(data, stats) {
+            const insights = [];
+            const alarms = [];
+            
+            // Group data by date to find correlations
+            const dateMap = {};
+            data.forEach(entry => {
+                const date = entry['Cycle start time'];
+                if (!dateMap[date]) dateMap[date] = {};
+                const question = entry['Question text'];
+                const answered = entry['Answered yes'];
+                dateMap[date][question] = (answered === true || answered === 'TRUE' || answered === 'true');
+            });
+            
+            const questions = Object.keys(stats);
+            
+            // Find positive correlations (when A happens, B also happens >70% of time)
+            for (let i = 0; i < questions.length; i++) {
+                for (let j = i + 1; j < questions.length; j++) {
+                    const q1 = questions[i];
+                    const q2 = questions[j];
+                    
+                    let bothYes = 0;
+                    let q1YesCount = 0;
+                    
+                    Object.keys(dateMap).forEach(date => {
+                        if (dateMap[date][q1] === true) {
+                            q1YesCount++;
+                            if (dateMap[date][q2] === true) {
+                                bothYes++;
+                            }
+                        }
+                    });
+                    
+                    if (q1YesCount >= 3) {
+                        const correlation = (bothYes / q1YesCount) * 100;
+                        if (correlation >= 70) {
+                            insights.push('<strong>Pattern Found:</strong> When you ' + q1.toLowerCase() + 
+                                        ', you also ' + q2.toLowerCase() + ' ' + correlation.toFixed(0) + '% of the time');
+                        }
+                    }
+                }
+            }
+            
+            // Find areas for improvement (habits done less than 50% of time)
+            questions.forEach(q => {
+                const s = stats[q];
+                const total = s.yes + s.no;
+                const yesPercent = total > 0 ? (s.yes / total) * 100 : 0;
+                
+                // Look for positive habits being done less than 50%
+                const positiveHabits = ['exercise', 'breakfast', 'gratitude', 'hydrat', 'sleep', 'protein', 'vitamin'];
+                const isPositiveHabit = positiveHabits.some(h => q.toLowerCase().includes(h));
+                
+                if (isPositiveHabit && yesPercent < 50 && total >= 5) {
+                    alarms.push('<strong>Opportunity:</strong> You only ' + q.toLowerCase() + ' ' + 
+                              yesPercent.toFixed(0) + '% of the time - try to increase this');
+                }
+                
+                // Look for negative symptoms happening frequently
+                const negativeSymptoms = ['bloat', 'gas', 'headache', 'pain', 'tired', 'stress', 'anxiety'];
+                const isNegativeSymptom = negativeSymptoms.some(h => q.toLowerCase().includes(h));
+                
+                if (isNegativeSymptom && yesPercent > 50 && total >= 5) {
+                    alarms.push('<strong>Watch Out:</strong> You experience ' + q.toLowerCase() + ' ' + 
+                              yesPercent.toFixed(0) + '% of the time - consider addressing this');
+                }
+            });
+            
+            return {
+                insights: insights.length > 0 ? insights : ['<strong>Keep Tracking:</strong> More data needed to find patterns'],
+                alarms: alarms.length > 0 ? alarms : ['<strong>Looking Good:</strong> No major concerns detected']
+            };
+        }
+        
+        // Journal rendering
+        let currentInsightIndex = 0;
+        let currentAlarmIndex = 0;
+        let allInsights = [];
+        let allAlarms = [];
+        
+        function refreshInsight() {
+            if (allInsights.length === 0) return;
+            currentInsightIndex = (currentInsightIndex + 1) % allInsights.length;
+            document.getElementById('insight-content').innerHTML = allInsights[currentInsightIndex];
+        }
+        
+        function refreshAlarm() {
+            if (allAlarms.length === 0) return;
+            currentAlarmIndex = (currentAlarmIndex + 1) % allAlarms.length;
+            document.getElementById('alarm-content').innerHTML = allAlarms[currentAlarmIndex];
+        }
+        
+        function renderJournal() {
+            if (journalData.length === 0) return;
+            
+            const filtered = journalData.filter(e => {
+                const q = (e['Question text'] || '').toLowerCase();
+                return !q.includes('masturbat');
+            });
+            
+            const stats = {};
+            filtered.forEach(e => {
+                const q = e['Question text'];
+                const ans = e['Answered yes'];
+                if (!stats[q]) stats[q] = { yes: 0, no: 0 };
+                if (ans === true || ans === 'TRUE' || ans === 'true') {
+                    stats[q].yes++;
+                } else {
+                    stats[q].no++;
+                }
+            });
+            
+            // Generate insights
+            const insightsData = generateJournalInsights(filtered, stats);
+            allInsights = insightsData.insights;
+            allAlarms = insightsData.alarms;
+            currentInsightIndex = Math.floor(Math.random() * allInsights.length);
+            currentAlarmIndex = Math.floor(Math.random() * allAlarms.length);
+            
+            let html = '<div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 1.5rem; margin-bottom: 2rem;">';
+            
+            // Interesting Insights
+            html += '<div style="background: var(--bg-tertiary); border-left: 4px solid var(--accent-secondary); ' +
+                   'border-radius: 8px; padding: 1.5rem;">' +
+                   '<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">' +
+                   '<h3 style="color: var(--accent-secondary); margin: 0;">🔗 Interesting Insights</h3>' +
+                   '<button onclick="refreshInsight()" style="background: var(--accent-secondary); border: none; ' +
+                   'border-radius: 4px; padding: 0.4rem 0.8rem; color: var(--bg-primary); cursor: pointer; ' +
+                   'font-size: 0.75rem; font-weight: bold;">↻ Refresh</button></div>' +
+                   '<div id="insight-content" style="color: var(--text-primary);">' + allInsights[currentInsightIndex] + '</div></div>';
+            
+            // Alarms
+            html += '<div style="background: var(--bg-tertiary); border-left: 4px solid var(--accent-danger); ' +
+                   'border-radius: 8px; padding: 1.5rem;">' +
+                   '<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">' +
+                   '<h3 style="color: var(--accent-danger); margin: 0;">⚠ Focus Areas</h3>' +
+                   '<button onclick="refreshAlarm()" style="background: var(--accent-danger); border: none; ' +
+                   'border-radius: 4px; padding: 0.4rem 0.8rem; color: white; cursor: pointer; ' +
+                   'font-size: 0.75rem; font-weight: bold;">↻ Refresh</button></div>' +
+                   '<div id="alarm-content" style="color: var(--text-primary);">' + allAlarms[currentAlarmIndex] + '</div></div>';
+            
+            html += '</div>';
+            
+            html += '<div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1rem;">';
+            
+            Object.keys(stats).forEach(q => {
+                const s = stats[q];
+                const total = s.yes + s.no;
+                const yesPercent = total > 0 ? ((s.yes / total) * 100).toFixed(0) : 0;
+                
+                // Calculate needle rotation: -90deg (No/left) to +90deg (Yes/right)
+                const needleRotation = (yesPercent / 100) * 180 - 90;
+                
+                html += '<div style="background: var(--bg-tertiary); border: 1px solid var(--border-color); ' +
+                       'border-radius: 12px; padding: 1.5rem;">' +
+                       '<h4 style="margin-bottom: 1rem; color: var(--text-primary);">' + q + '</h4>' +
+                       '<div class="journal-gauge">' +
+                       '<div class="journal-gauge-arc"></div>' +
+                       '<div class="journal-needle" style="transform: rotate(' + needleRotation + 'deg);"></div>' +
+                       '</div>' +
+                       '<div style="display: flex; justify-content: space-around; margin-top: 1rem;">' +
+                       '<div style="text-align: center;"><div style="font-size: 1.5rem; font-weight: bold; color: ' + 
+                       (s.no > s.yes ? 'var(--accent-primary)' : 'var(--text-secondary)') + ';">' + s.no + '</div>' +
+                       '<div style="font-size: 0.75rem; color: var(--text-dim);">No (' + (100 - yesPercent) + '%)</div></div>' +
+                       '<div style="text-align: center;"><div style="font-size: 1.5rem; font-weight: bold; color: ' + 
+                       (s.yes >= s.no ? 'var(--accent-primary)' : 'var(--text-secondary)') + ';">' + s.yes + '</div>' +
+                       '<div style="font-size: 0.75rem; color: var(--text-dim);">Yes (' + yesPercent + '%)</div></div>' +
+                       '</div></div>';
+            });
+            
+            html += '</div>';
+            document.getElementById('journal-content').innerHTML = html;
+        }
+        
+        // Health trends rendering
+        function renderHealth() {
+            if (physioData.length === 0) return;
+            
+            const validData = physioData.filter(d => d['Cycle start time'] && d['Cycle start time'].trim());
+            
+            const avgRecovery = calculateAverage(validData, 'Recovery score %');
+            const avgHRV = calculateAverage(validData, 'Heart rate variability (ms)');
+            const avgRHR = calculateAverage(validData, 'Resting heart rate (bpm)');
+            const avgStrain = calculateAverage(validData, 'Day Strain');
+            
+            let html = '<div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 1.5rem; margin-bottom: 2rem;">';
+            
+            html += '<div class="metric-card"><h3>Avg Recovery</h3>' +
+                   '<div class="metric-value">' + avgRecovery.toFixed(0) + '%</div>' +
+                   '<div class="metric-label">Recovery Score</div></div>';
+                   
+            html += '<div class="metric-card"><h3>Avg HRV</h3>' +
+                   '<div class="metric-value">' + avgHRV.toFixed(0) + '</div>' +
+                   '<div class="metric-label">Milliseconds</div></div>';
+                   
+            html += '<div class="metric-card"><h3>Avg RHR</h3>' +
+                   '<div class="metric-value">' + avgRHR.toFixed(0) + '</div>' +
+                   '<div class="metric-label">Beats per Minute</div></div>';
+                   
+            html += '<div class="metric-card"><h3>Avg Strain</h3>' +
+                   '<div class="metric-value">' + avgStrain.toFixed(1) + '</div>' +
+                   '<div class="metric-label">Day Strain</div></div>';
+            
+            html += '</div>';
+            
+            // Add charts
+            const charts = [
+                { id: 'recovery', title: 'Recovery Score', field: 'Recovery score %', color: '#00ff88', higherIsBetter: true },
+                { id: 'hrv', title: 'HRV', field: 'Heart rate variability (ms)', color: '#00ddff', higherIsBetter: true },
+                { id: 'rhr', title: 'Resting Heart Rate', field: 'Resting heart rate (bpm)', color: '#ff3366', higherIsBetter: false },
+                { id: 'strain', title: 'Day Strain', field: 'Day Strain', color: '#ffaa00', higherIsBetter: true }
+            ];
+            
+            charts.forEach(cfg => {
+                html += '<div class="chart-container" style="width: 100%; max-width: none;">' +
+                       '<h3>' + cfg.title + '</h3>' +
+                       '<div class="chart-wrapper" style="height: 300px;">' +
+                       '<canvas id="health-' + cfg.id + '"></canvas></div></div>';
+            });
+            
+            document.getElementById('health-content').innerHTML = html;
+            
+            // Render charts
+            setTimeout(() => {
+                charts.forEach(cfg => {
+                    createHealthChart('health-' + cfg.id, validData, cfg);
+                });
+            }, 100);
+        }
+        
+        function createHealthChart(canvasId, data, config) {
+            const ctx = document.getElementById(canvasId);
+            if (!ctx) return;
+            
+            // Reverse data so oldest is on left
+            const reversed = [...data].reverse();
+            const labels = reversed.map(d => new Date(d['Cycle start time']).toLocaleDateString());
+            const values = reversed.map(d => parseFloat(d[config.field])).filter(v => !isNaN(v));
             
             if (charts[canvasId]) {
                 charts[canvasId].destroy();
             }
             
-            // Check if Chart is available
-            if (typeof Chart === 'undefined') {
-                console.error('Chart.js is not loaded!');
-                return;
+            // Calculate regression line
+            const n = values.length;
+            const xSum = (n * (n - 1)) / 2;
+            const ySum = values.reduce((a, b) => a + b, 0);
+            const xySum = values.reduce((sum, y, i) => sum + (i * y), 0);
+            const xSquareSum = (n * (n - 1) * (2 * n - 1)) / 6;
+            const m = (n * xySum - xSum * ySum) / (n * xSquareSum - xSum * xSum);
+            const b = (ySum - m * xSum) / n;
+            const regressionLine = values.map((_, i) => m * i + b);
+            
+            // Color based on whether higher is better for this metric
+            let slopeColor;
+            if (config.higherIsBetter) {
+                slopeColor = m > 0 ? '#00ff88' : m < 0 ? '#ff3366' : '#a0a0a0';
+            } else {
+                slopeColor = m < 0 ? '#00ff88' : m > 0 ? '#ff3366' : '#a0a0a0';
             }
             
-            try {
-                charts[canvasId] = new Chart(ctx, {
-                    type: 'line',
-                    data: {
-                        labels: labels.slice(0, values.length),
-                        datasets: [{
-                            label: config.title,
-                            data: values,
-                            borderColor: config.color,
-                            backgroundColor: config.color + '20',
-                            borderWidth: 2,
-                            tension: 0.4,
-                            fill: true,
-                            pointRadius: 3,
-                            pointHoverRadius: 6
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        plugins: {
-                            legend: {
-                                display: false
-                            }
+            charts[canvasId] = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: config.title,
+                        data: values,
+                        borderColor: config.color,
+                        backgroundColor: 'transparent',
+                        borderWidth: 3,
+                        tension: 0.4,
+                        fill: false,
+                        pointRadius: 2
+                    }, {
+                        label: 'Trend',
+                        data: regressionLine,
+                        borderColor: slopeColor,
+                        borderWidth: 2,
+                        borderDash: [5, 5],
+                        tension: 0,
+                        fill: false,
+                        pointRadius: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        x: {
+                            grid: { color: 'rgba(255, 255, 255, 0.05)' },
+                            ticks: { color: '#a0a0a0', maxTicksLimit: 15 }
                         },
-                        scales: {
-                            x: {
-                                grid: {
-                                    color: 'rgba(255, 255, 255, 0.05)'
-                                },
-                                ticks: {
-                                    color: '#a0a0a0',
-                                    maxTicksLimit: 10
-                                }
-                            },
-                            y: {
-                                grid: {
-                                    color: 'rgba(255, 255, 255, 0.05)'
-                                },
-                                ticks: {
-                                    color: '#a0a0a0'
+                        y: {
+                            grid: { color: 'rgba(255, 255, 255, 0.05)' },
+                            ticks: { color: '#a0a0a0' }
+                        }
+                    },
+                    plugins: {
+                        annotation: {
+                            annotations: {
+                                slope: {
+                                    type: 'label',
+                                    xValue: values.length - 1,
+                                    yValue: regressionLine[regressionLine.length - 1],
+                                    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                                    content: [(m > 0 ? '+' : '') + m.toFixed(2) + '/day'],
+                                    color: slopeColor,
+                                    font: { size: 18, weight: 'bold' },
+                                    padding: 6,
+                                    borderRadius: 4,
+                                    position: 'end'
                                 }
                             }
                         }
                     }
-                });
-                console.log('Chart created successfully:', canvasId);
-            } catch (error) {
-                console.error('Error creating chart:', canvasId, error);
-            }
+                }
+            });
         }
         
-        function renderWorkoutDashboard() {
+        // Workouts rendering
+        function renderWorkouts() {
             if (workoutData.length === 0) return;
             
             const validData = workoutData.filter(d => d['Activity name'] && d['Activity name'].trim());
-            
-            // Group by activity
             const activities = {};
-            validData.forEach(workout => {
-                const activity = workout['Activity name'];
-                if (!activities[activity]) {
-                    activities[activity] = [];
-                }
-                activities[activity].push(workout);
+            
+            validData.forEach(w => {
+                const name = w['Activity name'];
+                if (!activities[name]) activities[name] = [];
+                activities[name].push(w);
             });
             
-            // Calculate calories per minute for each activity
-            const caloriesPerMin = {};
-            Object.keys(activities).forEach(activity => {
-                const workouts = activities[activity];
-                let totalCalories = 0;
-                let totalMinutes = 0;
-                
-                workouts.forEach(w => {
-                    const cal = parseFloat(w['Energy burned (cal)']) || 0;
-                    const dur = parseFloat(w['Duration (min)']) || 0;
-                    if (cal > 0 && dur > 0) {
-                        totalCalories += cal;
-                        totalMinutes += dur;
-                    }
-                });
-                
-                if (totalMinutes > 0) {
-                    caloriesPerMin[activity] = totalCalories / totalMinutes;
-                }
-            });
-            
-            // Sort by calories per minute
-            const sortedByCalPerMin = Object.entries(caloriesPerMin)
-                .sort((a, b) => a[1] - b[1]); // Low to high
+            const sorted = Object.entries(activities).sort((a, b) => b[1].length - a[1].length);
             
             let html = '';
+                        
+            // Add calories per minute bar chart
+            const calPerMin = {};
+            sorted.forEach(([name, workouts]) => {
+                let totalCals = 0;
+                let totalMins = 0;
+                workouts.forEach(w => {
+                    const cals = parseFloat(w['Energy burned (cal)']) || 0;
+                    const mins = parseFloat(w['Duration (min)']) || 0;
+                    totalCals += cals;
+                    totalMins += mins;
+                });
+                if (totalMins > 0) {
+                    calPerMin[name] = totalCals / totalMins;
+                }
+            });
             
-            // Add calories/min bar chart
-            if (sortedByCalPerMin.length > 0) {
-                const maxCalPerMin = Math.max(...sortedByCalPerMin.map(x => x[1]));
+            const sortedCalPerMin = Object.entries(calPerMin).sort((a, b) => a[1] - b[1]);
+            
+            if (sortedCalPerMin.length > 0) {
+                const maxCal = Math.max(...sortedCalPerMin.map(x => x[1]));
+                html += '<div class="chart-container" style="margin-bottom: 2rem;">' +
+                       '<h3>Calories Per Minute by Activity</h3>' +
+                       '<div style="display: flex; align-items: flex-end; justify-content: space-around; ' +
+                       'padding: 2rem 1rem; height: 300px; gap: 0.5rem;">';
                 
-                html += `
-                    <div class="chart-container" style="margin-bottom: 2rem;">
-                        <h3>Calories Per Minute by Activity</h3>
-                        <div style="display: flex; align-items: flex-end; justify-content: space-around; padding: 2rem 1rem; height: 300px; gap: 0.5rem;">
-                `;
-                
-                sortedByCalPerMin.forEach(([activity, calPerMin]) => {
-                    const barHeight = (calPerMin / maxCalPerMin) * 100;
-                    html += `
-                        <div style="flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; height: 100%;">
-                            <div style="font-size: 0.75rem; color: var(--accent-secondary); font-family: 'JetBrains Mono', monospace; margin-bottom: 0.5rem;">${calPerMin.toFixed(1)}</div>
-                            <div style="width: 100%; height: ${barHeight}%; background: var(--accent-secondary); border-radius: 4px 4px 0 0; transition: height 0.5s ease; box-shadow: 0 0 10px rgba(0, 221, 255, 0.4); min-height: 20px;"></div>
-                            <div style="margin-top: 0.5rem; font-size: 0.7rem; color: var(--text-secondary); text-align: center; writing-mode: horizontal-tb; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${activity}</div>
-                        </div>
-                    `;
+                sortedCalPerMin.forEach(([name, cal]) => {
+                    const heightPercent = (cal / maxCal) * 100;
+                    const heightPx = (cal / maxCal) * 250; // Use pixels for better visual scaling
+                    html += '<div style="display: flex; flex-direction: column; align-items: center; flex: 1;">' +
+                           '<div style="flex: 1; display: flex; align-items: flex-end; width: 100%;">' +
+                           '<div style="background: var(--accent-secondary); width: 100%; max-width: 60px; margin: 0 auto; ' +
+                           'height: ' + heightPx + 'px; border-radius: 4px 4px 0 0; min-height: 30px; position: relative; ' +
+                           'display: flex; align-items: center; justify-content: center;">' +
+                           '<span style="color: var(--bg-primary); font-weight: bold; font-size: 0.85rem;">' + cal.toFixed(1) + '</span>' +
+                           '</div></div>' +
+                           '<div style="font-size: 0.85rem; color: var(--text-secondary); margin-top: 0.5rem; font-weight: 600; ' +
+                           'text-align: center; word-wrap: break-word; max-width: 90px; min-height: 2.5rem; ' +
+                           'display: flex; align-items: flex-start; justify-content: center;">' + name + '</div>' +
+                           '</div>';
                 });
                 
                 html += '</div></div>';
             }
+
+            html += '<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem;">';
             
-            html += '<div class="activity-section">';
-            
-            // Sort activities by frequency (most to least)
-            const sortedActivities = Object.entries(activities)
-                .sort((a, b) => b[1].length - a[1].length);
-            
-            sortedActivities.forEach(([activity, workouts]) => {
-                const workoutCount = workouts.length;
+            sorted.forEach(([name, workouts]) => {
+                const avgDuration = calculateAverage(workouts, 'Duration (min)');
+                const avgStrain = calculateAverage(workouts, 'Activity Strain');
+                const avgCals = calculateAverage(workouts, 'Energy burned (cal)');
                 
-                html += `
-                    <div class="activity-card">
-                        <h4>${activity}</h4>
-                        <div style="margin-bottom: 1rem; color: var(--text-secondary);">
-                            Total workouts: ${workoutCount}
-                        </div>
-                        <div class="activity-stats">
-                `;
-                
-                const stats = [
-                    { label: 'Duration (min)', field: 'Duration (min)' },
-                    { label: 'Strain', field: 'Activity Strain' },
-                    { label: 'Calories', field: 'Energy burned (cal)' },
-                    { label: 'Max HR', field: 'Max HR (bpm)' },
-                    { label: 'Avg HR', field: 'Average HR (bpm)' }
-                ];
-                
-                stats.forEach(stat => {
-                    const values = workouts.map(w => parseFloat(w[stat.field])).filter(v => !isNaN(v) && v > 0);
-                    if (values.length > 0) {
-                        const min = Math.min(...values).toFixed(1);
-                        const avg = (values.reduce((a, b) => a + b, 0) / values.length).toFixed(1);
-                        const max = Math.max(...values).toFixed(1);
-                        
-                        if (workoutCount === 1) {
-                            html += `
-                                <div class="activity-stat">
-                                    <div class="activity-stat-label">${stat.label}</div>
-                                    <div class="activity-stat-values">
-                                        <span style="color: var(--accent-primary); font-weight: 700;">${avg}</span>
-                                    </div>
-                                </div>
-                            `;
-                        } else {
-                            html += `
-                                <div class="activity-stat">
-                                    <div class="activity-stat-label">${stat.label}</div>
-                                    <div class="activity-stat-values">
-                                        <span>Min: ${min}</span>
-                                        <span style="color: var(--accent-primary); font-weight: 700;">Avg: ${avg}</span>
-                                        <span>Max: ${max}</span>
-                                    </div>
-                                </div>
-                            `;
-                        }
-                    }
-                });
-                
-                html += '</div></div>';
+                html += '<div style="background: var(--bg-tertiary); border: 1px solid var(--border-color); ' +
+                       'border-radius: 12px; padding: 1.5rem;">' +
+                       '<h4 style="color: var(--accent-secondary); margin-bottom: 1rem; font-size: 1.2rem;">' + name + '</h4>' +
+                       '<div style="color: var(--text-secondary); font-size: 1rem; margin-bottom: 0.5rem;">Total: ' + workouts.length + '</div>' +
+                       '<div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; text-align: center;">' +
+                       '<div><div style="color: var(--accent-primary); font-size: 2rem; font-weight: bold;">' + avgDuration.toFixed(0) + '</div>' +
+                       '<div style="font-size: 0.85rem; color: var(--text-dim);">Avg Min</div></div>' +
+                       '<div><div style="color: var(--accent-primary); font-size: 2rem; font-weight: bold;">' + avgStrain.toFixed(1) + '</div>' +
+                       '<div style="font-size: 0.85rem; color: var(--text-dim);">Avg Strain</div></div>' +
+                       '<div><div style="color: var(--accent-primary); font-size: 2rem; font-weight: bold;">' + avgCals.toFixed(0) + '</div>' +
+                       '<div style="font-size: 0.85rem; color: var(--text-dim);">Avg Cals</div></div>' +
+                       '</div></div>';
             });
             
             html += '</div>';
-            
-            document.getElementById('workout-content').innerHTML = html;
+            document.getElementById('workouts-content').innerHTML = html;
         }
         
-        function renderSleepDashboard() {
+        // Sleep rendering  
+        function renderSleep() {
             if (sleepData.length === 0) return;
             
             const validData = sleepData.filter(d => d['Sleep onset'] && d['Sleep onset'].trim());
-            
-            // Filter out naps for calculations and charts
-            const nonNapData = validData.filter(d => 
+            const nonNaps = validData.filter(d => 
                 d['Nap'] !== 'TRUE' && d['Nap'] !== true && d['Nap'] !== 'true' && d['Nap'] !== '1'
             );
             
-            // Calculate averages (excluding naps)
-            const avgPerformance = calculateAverage(nonNapData, 'Sleep performance %');
-            const avgDuration = calculateAverage(nonNapData, 'Asleep duration (min)');
-            const avgEfficiency = calculateAverage(nonNapData, 'Sleep efficiency %');
-            const avgDebt = calculateAverage(nonNapData, 'Sleep debt (min)');
+            const avgPerf = calculateAverage(nonNaps, 'Sleep performance %');
+            const avgDuration = calculateAverage(nonNaps, 'Asleep duration (min)');
+            const avgEff = calculateAverage(nonNaps, 'Sleep efficiency %');
+            const avgDebt = calculateAverage(nonNaps, 'Sleep debt (min)');
             
-            let html = `
-                <div class="dashboard-grid">
-                    <div class="metric-card">
-                        <h3>Avg Performance</h3>
-                        <div class="metric-value">${avgPerformance.toFixed(0)}%</div>
-                        <div class="metric-label">Sleep Performance</div>
-                    </div>
-                    <div class="metric-card">
-                        <h3>Avg Duration</h3>
-                        <div class="metric-value">${(avgDuration / 60).toFixed(1)}</div>
-                        <div class="metric-label">Hours Asleep</div>
-                    </div>
-                    <div class="metric-card">
-                        <h3>Avg Efficiency</h3>
-                        <div class="metric-value">${avgEfficiency.toFixed(0)}%</div>
-                        <div class="metric-label">Sleep Efficiency</div>
-                    </div>
-                    <div class="metric-card">
-                        <h3>Avg Debt</h3>
-                        <div class="metric-value">${avgDebt.toFixed(0)}</div>
-                        <div class="metric-label">Minutes</div>
-                    </div>
-                </div>
-            `;
+            let html = '<div class="dashboard-grid">';
+            
+            html += '<div class="metric-card"><h3>Avg Performance</h3>' +
+                   '<div class="metric-value">' + avgPerf.toFixed(0) + '%</div>' +
+                   '<div class="metric-label">Sleep Performance</div></div>';
+                   
+            html += '<div class="metric-card"><h3>Avg Duration</h3>' +
+                   '<div class="metric-value">' + (avgDuration / 60).toFixed(1) + '</div>' +
+                   '<div class="metric-label">Hours Asleep</div></div>';
+                   
+            html += '<div class="metric-card"><h3>Avg Efficiency</h3>' +
+                   '<div class="metric-value">' + avgEff.toFixed(0) + '%</div>' +
+                   '<div class="metric-label">Sleep Efficiency</div></div>';
+                   
+            html += '<div class="metric-card"><h3>Avg Debt</h3>' +
+                   '<div class="metric-value">' + avgDebt.toFixed(0) + '</div>' +
+                   '<div class="metric-label">Minutes</div></div>';
+            
+            html += '</div>';
             
             // Add charts
-            const chartConfigs = [
-                { title: 'Sleep Performance', field: 'Sleep performance %', color: '#00ff88' },
-                { title: 'Respiratory Rate', field: 'Respiratory rate (rpm)', color: '#00ddff' },
-                { title: 'Asleep Duration (hours)', field: 'Asleep duration (min)', color: '#ffaa00', convert: minToHours },
-                { title: 'In Bed Duration (hours)', field: 'In bed duration (min)', color: '#ff3366', convert: minToHours },
-                { title: 'Light Sleep (hours)', field: 'Light sleep duration (min)', color: '#00ddff', convert: minToHours },
-                { title: 'Deep Sleep (hours)', field: 'Deep (SWS) duration (min)', color: '#00ff88', convert: minToHours },
-                { title: 'REM Sleep (hours)', field: 'REM duration (min)', color: '#ffaa00', convert: minToHours },
-                { title: 'Sleep Debt', field: 'Sleep debt (min)', color: '#ff3366' },
-                { title: 'Sleep Efficiency', field: 'Sleep efficiency %', color: '#00ff88' },
-                { title: 'Sleep Consistency', field: 'Sleep consistency %', color: '#00ddff' }
+            const sleepCharts = [
+                { id: 'perf', title: 'Sleep Performance', field: 'Sleep performance %', color: '#00ff88', higherIsBetter: true },
+                { id: 'duration', title: 'Sleep Duration (hrs)', field: 'Asleep duration (min)', color: '#00ddff', convert: true, higherIsBetter: true },
+                { id: 'efficiency', title: 'Sleep Efficiency', field: 'Sleep efficiency %', color: '#ffaa00', higherIsBetter: true },
+                { id: 'debt', title: 'Sleep Debt', field: 'Sleep debt (min)', color: '#ff3366', higherIsBetter: false }
             ];
             
-            chartConfigs.forEach((config, index) => {
-                const trendPerDay = calculateDailyTrend(validData, config.field, config.convert);
-                const trendDirection = trendPerDay > 0 ? '↑' : trendPerDay < 0 ? '↓' : '→';
-                const trendColor = trendPerDay > 0 ? '#00ff88' : trendPerDay < 0 ? '#ff3366' : '#a0a0a0';
-                
-                html += `
-                    <div class="chart-container">
-                        <h3>${config.title} 
-                            <span style="color: ${trendColor}; font-size: 0.9rem; margin-left: 1rem;">
-                                ${trendDirection} ${Math.abs(trendPerDay).toFixed(2)}/day
-                            </span>
-                        </h3>
-                        <div class="chart-wrapper">
-                            <canvas id="sleep-chart-${index}"></canvas>
-                        </div>
-                    </div>
-                `;
+            sleepCharts.forEach(cfg => {
+                html += '<div class="chart-container">' +
+                       '<h3>' + cfg.title + '</h3>' +
+                       '<div class="chart-wrapper"><canvas id="sleep-' + cfg.id + '"></canvas></div></div>';
             });
             
             document.getElementById('sleep-content').innerHTML = html;
             
-            // Render charts after DOM update
+            // Render charts
             setTimeout(() => {
-                chartConfigs.forEach((config, index) => {
-                    createLineChart(`sleep-chart-${index}`, nonNapData, config);
+                sleepCharts.forEach(cfg => {
+                    createSleepChart('sleep-' + cfg.id, nonNaps, cfg);
                 });
             }, 100);
         }
         
-        // Initialize with saved data
+        function createSleepChart(canvasId, data, config) {
+            const ctx = document.getElementById(canvasId);
+            if (!ctx) return;
+            
+            // Reverse data so oldest is on left
+            const reversed = [...data].reverse();
+            const labels = reversed.map(d => new Date(d['Sleep onset']).toLocaleDateString());
+            let values = reversed.map(d => parseFloat(d[config.field])).filter(v => !isNaN(v));
+            
+            if (config.convert) {
+                values = values.map(v => v / 60); // Convert minutes to hours
+            }
+            
+            if (charts[canvasId]) {
+                charts[canvasId].destroy();
+            }
+            
+            // Calculate regression line
+            const n = values.length;
+            const xSum = (n * (n - 1)) / 2;
+            const ySum = values.reduce((a, b) => a + b, 0);
+            const xySum = values.reduce((sum, y, i) => sum + (i * y), 0);
+            const xSquareSum = (n * (n - 1) * (2 * n - 1)) / 6;
+            const m = (n * xySum - xSum * ySum) / (n * xSquareSum - xSum * xSum);
+            const b = (ySum - m * xSum) / n;
+            const regressionLine = values.map((_, i) => m * i + b);
+            
+            // Color based on whether higher is better for this metric
+            let slopeColor;
+            if (config.higherIsBetter) {
+                slopeColor = m > 0 ? '#00ff88' : m < 0 ? '#ff3366' : '#a0a0a0';
+            } else {
+                slopeColor = m < 0 ? '#00ff88' : m > 0 ? '#ff3366' : '#a0a0a0';
+            }
+            
+            charts[canvasId] = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: config.title,
+                        data: values,
+                        borderColor: config.color,
+                        backgroundColor: 'transparent',
+                        borderWidth: 3,
+                        tension: 0.4,
+                        fill: false,
+                        pointRadius: 2
+                    }, {
+                        label: 'Trend',
+                        data: regressionLine,
+                        borderColor: slopeColor,
+                        borderWidth: 2,
+                        borderDash: [5, 5],
+                        tension: 0,
+                        fill: false,
+                        pointRadius: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        x: {
+                            grid: { color: 'rgba(255, 255, 255, 0.05)' },
+                            ticks: { color: '#a0a0a0', maxTicksLimit: 15 }
+                        },
+                        y: {
+                            grid: { color: 'rgba(255, 255, 255, 0.05)' },
+                            ticks: { color: '#a0a0a0' }
+                        }
+                    },
+                    plugins: {
+                        annotation: {
+                            annotations: {
+                                slope: {
+                                    type: 'label',
+                                    xValue: values.length - 1,
+                                    yValue: regressionLine[regressionLine.length - 1],
+                                    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                                    content: [(m > 0 ? '+' : '') + m.toFixed(2) + '/day'],
+                                    color: slopeColor,
+                                    font: { size: 18, weight: 'bold' },
+                                    padding: 6,
+                                    borderRadius: 4,
+                                    position: 'end'
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        
+
+                // Load saved data on startup
         window.addEventListener('load', () => {
-            journalData = loadFromLocalStorage('journalData');
-            physioData = loadFromLocalStorage('physioData');
-            workoutData = loadFromLocalStorage('workoutData');
-            sleepData = loadFromLocalStorage('sleepData');
-            
-            updateHeaderInfo();
-            renderGoals();
-            
-            if (journalData.length > 0) renderJournalDashboard();
-            if (physioData.length > 0) renderPhysioDashboard();
-            if (workoutData.length > 0) renderWorkoutDashboard();
-            if (sleepData.length > 0) renderSleepDashboard();
+            try {
+                const saved = localStorage.getItem('physioData');
+                if (saved) {
+                    physioData = JSON.parse(saved);
+                    updateHeaderInfo();
+                    renderGoals();
+                    renderHomeHRVChart();
+                }
+            } catch (e) {
+                console.log('No saved data');
+            }
         });
     </script>
 </body>
